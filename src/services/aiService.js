@@ -39,37 +39,35 @@ class ServicoAgentIA {
       throw new Error('Chave muito curta - formato inválido');
     }
 
-    // Tenta fazer um teste real com a OpenRouter API
+    // Tenta validar via backend (que faz proxy para OpenRouter)
     try {
-      console.log('🔍 Testando chave com API OpenRouter...');
-      const resposta = await fetch('https://api.openrouter.io/api/v1/models', {
-        method: 'GET',
+      console.log('🔍 Validando chave via backend...');
+      const response = await fetch(`${URL_API_BASE}/api/superadmin/ai-agent/validate-key`, {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${chaveFormatada}`,
-          'HTTP-Referer': 'https://redcomercialweb.vercel.app',
-          'X-Title': 'RedCommercial AI Agent'
-        }
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ api_key: chaveFormatada })
       });
 
-      console.log('Status OpenRouter:', resposta.status);
+      const data = await response.json();
+      console.log('Status validação:', response.status, 'Resposta:', data);
 
-      if (resposta.status === 200) {
+      if (response.ok && (data.valida || data.valid)) {
         console.log('✓ Chave validada com sucesso!');
         return true;
-      } else if (resposta.status === 401) {
+      } else if (response.status === 401) {
         throw new Error('Chave inválida ou expirada');
-      } else if (resposta.status === 429) {
-        throw new Error('Muitas requisições - tente novamente mais tarde');
       } else {
-        // Outros erros - mas ainda aceita se formato está ok
-        console.warn(`⚠ Status inesperado: ${resposta.status}, mas chave tem formato correto`);
-        return true; // Aceita se tem o formato correto
+        // Mesmo que não consiga validar via API, aceita se formato está ok
+        console.warn('⚠ Não conseguiu validar, mas formato está correto');
+        return true;
       }
     } catch (erro) {
-      console.warn('⚠ Não conseguiu validar via API OpenRouter:', erro.message);
-      // Se não conseguir conectar à API (erro de rede/CORS), mas formato está ok, aceita
+      console.warn('⚠ Erro na validação:', erro.message);
+      // Se não conseguir validar, mas o formato está OK, aceita mesmo assim
       if (chaveFormatada.startsWith('sk-or-v1-') && chaveFormatada.length >= 65) {
-        console.log('✓ Formato correto - aceitando chave mesmo sem validação via API');
+        console.log('✓ Formato correto - aceitando chave mesmo sem validação');
         return true;
       }
       throw erro;
@@ -82,16 +80,16 @@ class ServicoAgentIA {
         throw new Error('Chave de API não fornecida');
       }
 
-      console.log('📥 Buscando modelos do OpenRouter...');
+      console.log('📥 Buscando modelos via backend...');
       
-      // Chamar direto o OpenRouter em vez do backend
-      const resposta = await fetch('https://api.openrouter.io/api/v1/models', {
-        method: 'GET',
+      // Chamar backend que faz proxy para OpenRouter
+      const resposta = await fetch(`${URL_API_BASE}/api/superadmin/ai-agent/models`, {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${chaveAPI}`,
-          'HTTP-Referer': 'https://redcomercialweb.vercel.app',
-          'X-Title': 'RedCommercial AI Agent'
-        }
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${chaveAPI}`
+        },
+        body: JSON.stringify({ api_key: chaveAPI })
       });
 
       console.log('Status de modelos:', resposta.status);
@@ -101,32 +99,16 @@ class ServicoAgentIA {
       }
 
       if (!resposta.ok) {
-        throw new Error(`Erro HTTP ${resposta.status} ao buscar modelos`);
+        const erro = await resposta.json().catch(() => ({ erro: 'Erro ao carregar' }));
+        throw new Error(erro.erro || `Erro HTTP ${resposta.status}`);
       }
 
       const dados = await resposta.json();
       const modelos = dados.data || [];
       
-      // Processar e ordenar modelos recomendados
-      const modelosProcessados = modelos.map(m => ({
-        id: m.id,
-        name: m.name || m.id,
-        description: m.description || '',
-        pricing: m.pricing || {},
-        is_recommended: ['openrouter/auto', 'meta-llama/llama-2-70b-chat', 'mistralai/mistral-7b-instruct'].includes(m.id)
-      }));
-
-      // Ordenar com recomendados primeiro
-      modelosProcessados.sort((a, b) => {
-        if (a.is_recommended === b.is_recommended) {
-          return a.name.localeCompare(b.name);
-        }
-        return b.is_recommended - a.is_recommended;
-      });
-
-      console.log(`✓ ${modelosProcessados.length} modelos recebidos`);
-      this.modelos = modelosProcessados;
-      return modelosProcessados;
+      console.log(`✓ ${modelos.length} modelos recebidos`);
+      this.modelos = modelos;
+      return modelos;
     } catch (erro) {
       console.error('❌ Erro ao obter modelos:', erro);
       throw new Error(`Falha ao carregar modelos: ${erro.message}`);
@@ -143,26 +125,19 @@ class ServicoAgentIA {
         throw new Error('Modelo não selecionado');
       }
 
-      console.log('📤 Enviando para OpenRouter:', { prompt, modelo });
+      console.log('📤 Enviando prompt para IA via backend');
       
-      const resposta = await fetch('https://api.openrouter.io/api/v1/chat/completions', {
+      const resposta = await fetch(`${URL_API_BASE}/api/superadmin/ai-agent/chat`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${chaveAPI}`,
-          'HTTP-Referer': 'https://redcomercialweb.vercel.app',
-          'X-Title': 'RedCommercial AI Agent',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${chaveAPI}`
         },
         body: JSON.stringify({
-          model: modelo,
-          messages: [
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 2048
+          prompt: prompt,
+          modelo: modelo,
+          api_key: chaveAPI,
+          aplicar_mudancas: true
         })
       });
 
@@ -177,22 +152,19 @@ class ServicoAgentIA {
       }
 
       if (!resposta.ok) {
-        const erro = await resposta.json().catch(() => ({ error: { message: 'Erro desconhecido' } }));
-        const msg = erro.error?.message || `Erro HTTP ${resposta.status}`;
-        console.error('Erro de chat:', erro);
-        throw new Error(msg);
+        const erro = await resposta.json().catch(() => ({ erro: 'Erro desconhecido' }));
+        throw new Error(erro.erro || `Erro HTTP ${resposta.status}`);
       }
 
       const dados = await resposta.json();
-      const resposta_ia = dados.choices?.[0]?.message?.content || 'Sem resposta';
       
-      console.log('✓ Resposta da IA recebida');
+      console.log('✓ Resposta recebida');
       
       return {
-        resposta: resposta_ia,
-        message: resposta_ia,
-        modelo_usado: modelo,
-        tokens_usados: dados.usage || {}
+        resposta: dados.resposta || dados.message || 'Sem resposta',
+        message: dados.resposta || dados.message || 'Sem resposta',
+        mudancas: dados.mudancas || [],
+        modelo_usado: modelo
       };
     } catch (erro) {
       console.error('❌ Erro ao enviar prompt:', erro);
