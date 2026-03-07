@@ -127,9 +127,9 @@ class ServicoAgentIA {
       console.error('❌ Erro ao obter modelos:', erro);
       // Se falhar, retorna modelos padrão para que o usuário possa usar
       const modelosPadrao = [
-        { id: 'llama-3.1-70b-versatile', name: 'Llama 3.1 70B Versatile (Recomendado)', is_recommended: true },
-        { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant', is_recommended: false },
-        { id: 'llama3-70b-8192', name: 'Llama 3 70B', is_recommended: false }
+        { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant (Recomendado)', is_recommended: true },
+        { id: 'llama3-70b-8192', name: 'Llama 3 70B', is_recommended: false },
+        { id: 'gemma-7b-it', name: 'Gemma 7B', is_recommended: false }
       ];
       console.warn('⚠ Usando modelos padrão');
       this.modelos = modelosPadrao;
