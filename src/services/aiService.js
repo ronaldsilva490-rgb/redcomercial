@@ -44,7 +44,7 @@ class ServicoAgentIA {
       console.log('🔍 Testando chave via proxy Vercel...');
       
       // Usa o proxy também para validação
-      const resposta = await fetch('/api/openrouter?path=models', {
+      const resposta = await fetch('/api/proxy/models', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${chaveFormatada}`,
@@ -83,7 +83,7 @@ class ServicoAgentIA {
       console.log('📥 Buscando modelos via proxy Vercel...');
       
       // Usa o proxy do Vercel ao invés de chamar OpenRouter direto
-      const resposta = await fetch('/api/openrouter?path=models', {
+      const resposta = await fetch('/api/proxy/models', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${chaveAPI}`,
@@ -151,7 +151,7 @@ class ServicoAgentIA {
       console.log('📤 Enviando para OpenRouter via proxy Vercel:', { modelo });
       
       // Usa o proxy do Vercel ao invés de chamar OpenRouter direto
-      const resposta = await fetch('/api/openrouter?path=chat/completions', {
+      const resposta = await fetch('/api/proxy/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${chaveAPI}`,
