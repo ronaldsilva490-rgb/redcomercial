@@ -1,90 +1,111 @@
 /**
- * AI Agent Service
- * Handles communication with OpenRouter-powered AI agent
+ * Serviço de Agente de IA
+ * Gerencia comunicação com o agente de IA via OpenRouter
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7860';
+const URL_API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7860';
 
-class AIService {
+class ServicoAgentIA {
   constructor() {
-    this.apiKey = localStorage.getItem('openrouter_api_key') || '';
-    this.models = [];
+    this.chaveAPI = localStorage.getItem('openrouter_api_key') || '';
+    this.modelos = [];
   }
 
-  setApiKey(key) {
-    this.apiKey = key;
-    localStorage.setItem('openrouter_api_key', key);
+  definirChaveAPI(chave) {
+    this.chaveAPI = chave;
+    localStorage.setItem('openrouter_api_key', chave);
+    console.log('✓ Chave de API definida');
   }
 
-  getApiKey() {
-    return this.apiKey;
+  obterChaveAPI() {
+    return this.chaveAPI;
   }
 
-  async validateApiKey(apiKey) {
+  async validarChaveAPI(chaveAPI) {
     try {
-      const response = await fetch(`${API_BASE}/api/superadmin/ai-agent/validate-key`, {
+      console.log('🔍 Validando chave de API com backend...');
+      const resposta = await fetch(`${URL_API_BASE}/api/superadmin/ai-agent/validate-key`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ api_key: apiKey })
+        body: JSON.stringify({ api_key: chaveAPI })
       });
 
-      if (!response.ok) throw new Error('Validation failed');
-      return (await response.json()).valid;
-    } catch (error) {
-      console.error('API Key validation error:', error);
-      return false;
+      console.log('Status da resposta:', resposta.status);
+      
+      if (!resposta.ok) {
+        const erro = await resposta.json().catch(() => ({ erro: 'Erro desconhecido' }));
+        console.error('Erro de validação:', erro);
+        throw new Error(erro.erro || `Erro HTTP ${resposta.status}`);
+      }
+
+      const dados = await resposta.json();
+      console.log('✓ Resposta de validação:', dados);
+      return dados.valida || dados.valid || false;
+    } catch (erro) {
+      console.error('❌ Erro ao validar chave:', erro);
+      throw new Error(`Falha ao validar chave: ${erro.message}`);
     }
   }
 
-  async getModels(apiKey = this.apiKey) {
+  async obterModelos(chaveAPI = this.chaveAPI) {
     try {
-      const response = await fetch(`${API_BASE}/api/superadmin/ai-agent/models`, {
+      console.log('📥 Buscando modelos do backend...');
+      const resposta = await fetch(`${URL_API_BASE}/api/superadmin/ai-agent/models`, {
         method: 'GET',
         headers: {
-          'X-API-Key': apiKey || this.apiKey,
+          'X-API-Key': chaveAPI || this.chaveAPI,
           'Content-Type': 'application/json'
         }
       });
 
-      if (!response.ok) throw new Error('Failed to fetch models');
+      console.log('Status de modelos:', resposta.status);
 
-      const data = await response.json();
-      this.models = data;
-      return data;
-    } catch (error) {
-      console.error('Error fetching models:', error);
-      throw error;
+      if (!resposta.ok) {
+        const erro = await resposta.json().catch(() => ({ erro: 'Erro ao carregar' }));
+        console.error('Erro ao obter modelos:', erro);
+        throw new Error(erro.erro || `Erro HTTP ${resposta.status}`);
+      }
+
+      const dados = await resposta.json();
+      console.log('✓ Modelos recebidos:', dados);
+      this.modelos = dados;
+      return dados;
+    } catch (erro) {
+      console.error('❌ Erro ao obter modelos:', erro);
+      throw new Error(`Falha ao carregar modelos: ${erro.message}`);
     }
   }
 
-  async sendPrompt(prompt, model, applyChanges = true) {
+  async enviarPrompt(prompt, modelo, chaveAPI = this.chaveAPI) {
     try {
-      if (!this.apiKey) {
-        throw new Error('API key not set');
-      }
-
-      const response = await fetch(`${API_BASE}/api/superadmin/ai-agent/chat`, {
+      console.log('📤 Enviando prompt para IA:', { prompt, modelo });
+      const resposta = await fetch(`${URL_API_BASE}/api/superadmin/ai-agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt,
-          model,
-          api_key: this.apiKey,
-          apply_changes: applyChanges
+          modelo,
+          api_key: chaveAPI,
+          aplicar_mudancas: true
         })
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'API error');
+      console.log('Status da resposta de chat:', resposta.status);
+
+      if (!resposta.ok) {
+        const erro = await resposta.json().catch(() => ({ erro: 'Erro desconhecido' }));
+        console.error('Erro de chat:', erro);
+        throw new Error(erro.erro || `Erro HTTP ${resposta.status}`);
       }
 
-      return await response.json();
-    } catch (error) {
-      console.error('Error sending prompt:', error);
-      throw error;
+      const dados = await resposta.json();
+      console.log('✓ Resposta da IA:', dados);
+      return dados;
+    } catch (erro) {
+      console.error('❌ Erro ao enviar prompt:', erro);
+      throw new Error(`Falha ao processar prompt: ${erro.message}`);
     }
   }
 }
 
-export default new AIService();
+export default new ServicoAgentIA();

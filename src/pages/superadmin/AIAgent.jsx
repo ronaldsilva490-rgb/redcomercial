@@ -1,389 +1,341 @@
 import React, { useState, useEffect, useRef } from 'react';
-import aiService from '../../services/aiService.js';
+import servicoAgentIA from '../../services/aiService.js';
 import './css/AIAgent.css';
 
-const AIAgent = () => {
-  const [apiKey, setApiKey] = useState('');
-  const [apiKeyInput, setApiKeyInput] = useState('');
-  const [isKeyValid, setIsKeyValid] = useState(false);
-  const [models, setModels] = useState([]);
-  const [selectedModel, setSelectedModel] = useState('');
-  const [messages, setMessages] = useState([]);
+const AgentIA = () => {
+  const [chaveAPI, setChaveAPI] = useState('');
+  const [entradaChaveAPI, setEntradaChaveAPI] = useState('');
+  const [chaveValida, setChaveValida] = useState(false);
+  const [modelos, setModelos] = useState([]);
+  const [modeloSelecionado, setModeloSelecionado] = useState('');
+  const [mensagens, setMensagens] = useState([]);
   const [prompt, setPrompt] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [carregando, setCarregando] = useState(false);
   const [status, setStatus] = useState('');
-  const [tabActive, setTabActive] = useState('chat');
-  const messagesEndRef = useRef(null);
-  const [autoApplyChanges, setAutoApplyChanges] = useState(true);
+  const [erroMensagem, setErroMensagem] = useState('');
+  const [abaAtiva, setAbaAtiva] = useState('chat');
+  const refFimMensagens = useRef(null);
+  const [aplicarAutomaticamente, setAplicarAutomaticamente] = useState(true);
 
-  // Load API key from localStorage on mount
+  // Carrega chave de API do localStorage ao montar
   useEffect(() => {
-    const savedKey = aiService.getApiKey();
-    if (savedKey) {
-      setApiKey(savedKey);
-      setApiKeyInput('');
-      checkKeyValidity(savedKey);
+    const chaveSalva = servicoAgentIA.obterChaveAPI();
+    if (chaveSalva) {
+      setChaveAPI(chaveSalva);
+      setEntradaChaveAPI('');
+      verificarValidadeChave(chaveSalva);
     }
   }, []);
 
-  // Scroll to bottom when new messages arrive
+  // Rola para o final quando novas mensagens chegam
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    refFimMensagens.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [mensagens]);
 
-  const checkKeyValidity = async (key) => {
+  const verificarValidadeChave = async (chave) => {
     try {
-      const isValid = await aiService.validateApiKey(key);
-      setIsKeyValid(isValid);
-      if (isValid) {
-        aiService.setApiKey(key);
-        await loadModels(key);
+      console.log('🔍 Verificando chave de API...');
+      setErroMensagem('');
+      const valida = await servicoAgentIA.validarChaveAPI(chave);
+      console.log('Resultado da validação:', valida);
+      setChaveValida(valida);
+      if (valida) {
+        servicoAgentIA.definirChaveAPI(chave);
+        await carregarModelos(chave);
+        setStatus('✓ Chave de API validada com sucesso!');
+        setTimeout(() => setStatus(''), 3000);
+      } else {
+        setErroMensagem('❌ Chave de API inválida ou expirada');
+        setChaveValida(false);
       }
-    } catch (error) {
-      console.error('Error validating key:', error);
-      setIsKeyValid(false);
+    } catch (erro) {
+      console.error('Erro ao validar chave:', erro);
+      setErroMensagem(`❌ Erro: ${erro.message || erro}`);
+      setChaveValida(false);
     }
   };
 
-  const handleSetApiKey = async () => {
-    if (!apiKeyInput.trim()) {
-      setStatus('⚠️ Please enter an API key');
+  const handleDefinirChaveAPI = async () => {
+    if (!entradaChaveAPI.trim()) {
+      setErroMensagem('⚠️ Cole sua chave de API do OpenRouter');
       return;
     }
 
-    setStatus('🔍 Validating API key...');
-    await checkKeyValidity(apiKeyInput);
-    
-    if (isKeyValid) {
-      setApiKey(apiKeyInput);
-      setApiKeyInput('');
-      setStatus('✓ API key validated!');
-      setTimeout(() => setStatus(''), 3000);
-    } else {
-      setStatus('✗ Invalid API key');
-    }
+    setStatus('🔍 Validando chave de API...');
+    setErroMensagem('');
+    await verificarValidadeChave(entradaChaveAPI);
   };
 
-  const loadModels = async (key = apiKey) => {
+  const carregarModelos = async (chave = chaveAPI) => {
     try {
-      setStatus('📦 Loading models...');
-      const data = await aiService.getModels(key);
+      setStatus('📦 Carregando modelos...');
+      setErroMensagem('');
+      console.log('📥 Buscando modelos do OpenRouter...');
+      const dados = await servicoAgentIA.obterModelos(chave);
+      console.log('✓ Modelos recebidos:', dados);
 
-      // Get recommended models first
-      const recommended = data.recommended_for_development || [];
-      if (recommended.length > 0) {
-        setSelectedModel(recommended[0].id);
+      setModelos(dados);
+      if (dados && dados.length > 0) {
+        setModeloSelecionado(dados[0].id);
       }
-
-      setModels(data);
-      setStatus('✓ Models loaded!');
+      setStatus('✓ Modelos carregados!');
       setTimeout(() => setStatus(''), 2000);
-    } catch (error) {
-      setStatus(`✗ Failed to load models: ${error.message}`);
+    } catch (erro) {
+      console.error('Erro ao carregar modelos:', erro);
+      setErroMensagem(`❌ Erro ao carregar modelos: ${erro.message || erro}`);
     }
   };
 
-  const handleSendPrompt = async (e) => {
+  const handleEnviarPrompt = async (e) => {
     e.preventDefault();
 
     if (!prompt.trim()) {
-      setStatus('⚠️ Please enter a prompt');
+      setErroMensagem('⚠️ Digite um comando para a IA');
       return;
     }
 
-    if (!selectedModel) {
-      setStatus('⚠️ Please select a model');
+    if (!modeloSelecionado) {
+      setErroMensagem('⚠️ Selecione um modelo');
       return;
     }
 
-    // Add user message
-    const userMessage = {
-      type: 'user',
-      content: prompt,
-      timestamp: new Date()
-    };
-    setMessages([...messages, userMessage]);
+    if (!chaveAPI) {
+      setErroMensagem('⚠️ Configure sua chave de API primeiro');
+      return;
+    }
 
-    setLoading(true);
+    setMensagens(prev => [...prev, { role: 'usuario', conteudo: prompt, ts: new Date() }]);
     setPrompt('');
-    setStatus('🤖 AI is analyzing your request...');
+    setCarregando(true);
+    setStatus('🤖 IA analisando seu pedido...');
+    setErroMensagem('');
 
     try {
-      const response = await aiService.sendPrompt(prompt, selectedModel, autoApplyChanges);
-
-      // Add AI response
-      const aiMessage = {
-        type: 'ai',
-        content: response.ai_response,
-        changes: response.changes_found || [],
-        applied: response.changes_applied || [],
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-
-      if (response.changes_applied && response.changes_applied.length > 0) {
-        const successCount = response.changes_applied.filter(c => c.status === 'success').length;
-        setStatus(`✓ Applied ${successCount} change(s)!`);
-        
-        // Switch to changes tab to show results
-        setTabActive('changes');
-      } else if (response.changes_found && response.changes_found.length > 0) {
-        setStatus('ℹ️ Changes detected but not applied (auto-apply disabled)');
+      console.log('📤 Enviando para IA:', prompt);
+      const resposta = await servicoAgentIA.enviarPrompt(prompt, modeloSelecionado, chaveAPI);
+      console.log('📥 Resposta da IA:', resposta);
+      
+      setMensagens(prev => [...prev, { 
+        role: 'ia', 
+        conteudo: resposta.resposta || resposta.message || 'Sem resposta',
+        ts: new Date(),
+        mudancas: resposta.mudancas || []
+      }]);
+      
+      if (resposta.mudancas && resposta.mudancas.length > 0 && aplicarAutomaticamente) {
+        setStatus('✓ Mudanças aplicadas com sucesso!');
       } else {
-        setStatus('ℹ️ No code changes needed');
+        setStatus('✓ Resposta recebida');
       }
-
-      setTimeout(() => setStatus(''), 5000);
-    } catch (error) {
-      const errorMessage = {
-        type: 'error',
-        content: `Error: ${error.message}`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      setStatus(`✗ Error: ${error.message}`);
+      setTimeout(() => setStatus(''), 3000);
+    } catch (erro) {
+      console.error('Erro ao enviar prompt:', erro);
+      setMensagens(prev => [...prev, { 
+        role: 'ia', 
+        conteudo: `❌ Erro: ${erro.message || erro}`,
+        ts: new Date(),
+        isError: true
+      }]);
+      setErroMensagem(`Erro ao processar: ${erro.message || erro}`);
     } finally {
-      setLoading(false);
+      setCarregando(false);
     }
   };
 
-  // Component render
-  if (!isKeyValid) {
-    return (
-      <div className="ai-agent-container">
-        <div className="ai-setup">
-          <h2>🤖 AI Agent Setup</h2>
-          <p>Enter your OpenRouter API key to get started</p>
+  const limparConversas = () => {
+    if (confirm('Limpar todas as conversas?')) {
+      setMensagens([]);
+      setStatus('✓ Conversas limpas');
+      setTimeout(() => setStatus(''), 2000);
+    }
+  };
 
-          <div className="setup-form">
-            <input
-              type="password"
-              placeholder="Enter your OpenRouter API key..."
-              value={apiKeyInput}
-              onChange={(e) => setApiKeyInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSetApiKey()}
-              className="api-key-input"
-            />
-            <button onClick={handleSetApiKey} className="btn-primary">
-              Validate & Connect
-            </button>
-          </div>
-
-          <p className="help-text">
-            📚 Don't have an API key?{' '}
-            <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">
-              Get one free at OpenRouter
-            </a>
-          </p>
-
-          {status && <div className="status-message">{status}</div>}
-        </div>
-      </div>
-    );
-  }
+  const desconectar = () => {
+    if (confirm('Desconectar da IA?')) {
+      setChaveAPI('');
+      setChaveValida(false);
+      setMensagens([]);
+      setModeloSelecionado('');
+      localStorage.removeItem('openrouter_api_key');
+    }
+  };
 
   return (
     <div className="ai-agent-container">
-      <div className="ai-header">
-        <h1>🤖 AI Code Agent</h1>
-        <button
-          className="btn-secondary"
-          onClick={() => {
-            setApiKey('');
-            setIsKeyValid(false);
-            localStorage.removeItem('openrouter_api_key');
-          }}
-        >
-          Disconnect
-        </button>
-      </div>
-
-      <div className="ai-controls">
-        <div className="model-selector">
-          <label>AI Model:</label>
-          <select
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            className="model-select"
-          >
-            <optgroup label="⭐ Recommended (Free)">
-              {models.recommended_for_development?.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.name} - {model.best_for}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Free Models">
-              {models.free_models?.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.name}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Paid Models">
-              {models.paid_models?.map((model) => (
-                <option key={model.id} value={model.id}>
-                  💳 {model.name}
-                </option>
-              ))}
-            </optgroup>
-          </select>
+      {/* HEADER */}
+      <div className="ai-agent-header">
+        <div className="ai-agent-titulo">
+          <span className="ai-agent-icon">🤖</span>
+          <span>Agente de IA (OpenRouter)</span>
         </div>
-
-        <label className="checkbox-control">
-          <input
-            type="checkbox"
-            checked={autoApplyChanges}
-            onChange={(e) => setAutoApplyChanges(e.target.checked)}
-          />
-          Auto-apply changes
-        </label>
+        {chaveValida && <div className="ai-agent-badge">✓ Conectado</div>}
       </div>
 
-      <div className="ai-tabs">
-        <button
-          className={`tab-btn ${tabActive === 'chat' ? 'active' : ''}`}
-          onClick={() => setTabActive('chat')}
-        >
-          💬 Chat
-        </button>
-        <button
-          className={`tab-btn ${tabActive === 'changes' ? 'active' : ''}`}
-          onClick={() => setTabActive('changes')}
-        >
-          📝 Changes {messages.some(m => m.applied?.length) && '✓'}
-        </button>
-        <button
-          className={`tab-btn ${tabActive === 'info' ? 'active' : ''}`}
-          onClick={() => setTabActive('info')}
-        >
-          ℹ️ Info
-        </button>
-      </div>
-
-      {tabActive === 'chat' && (
-        <div className="ai-chat-panel">
-          <div className="messages">
-            {messages.length === 0 ? (
-              <div className="empty-state">
-                <p>👋 Start by describing what you want to change</p>
-                <p className="example">Example: "Change the admin dashboard background to dark red"</p>
-              </div>
-            ) : (
-              messages.map((msg, idx) => (
-                <div key={idx} className={`message message-${msg.type}`}>
-                  <div className="message-header">
-                    <span className="message-role">
-                      {msg.type === 'user' ? '👤 You' : msg.type === 'error' ? '❌ Error' : '🤖 AI'}
-                    </span>
-                    <span className="message-time">
-                      {msg.timestamp?.toLocaleTimeString()}
-                    </span>
-                  </div>
-                  <div className="message-content">
-                    {msg.type === 'ai' && msg.applied?.length > 0 && (
-                      <div className="applied-changes">
-                        <strong>✓ Applied changes:</strong>
-                        <ul>
-                          {msg.applied.map((change, i) => (
-                            <li key={i} className={`change-${change.status}`}>
-                              {change.file}: {change.message}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    <p>{msg.content}</p>
-                  </div>
-                </div>
-              ))
-            )}
-            <div ref={messagesEndRef} />
+      {/* CONFIGURAÇÃO */}
+      {!chaveValida && (
+        <div className="ai-agent-setup">
+          <div className="ai-agent-setup-titulo">🔑 Configure sua Chave de API</div>
+          <div className="ai-agent-setup-instrucoes">
+            <ol>
+              <li>Acesse <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">openrouter.ai/keys</a></li>
+              <li>Copie sua chave de API</li>
+              <li>Cole abaixo</li>
+            </ol>
+          </div>
+          
+          <div className="ai-agent-setup-input-group">
+            <input
+              type="password"
+              value={entradaChaveAPI}
+              onChange={(e) => setEntradaChaveAPI(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleDefinirChaveAPI()}
+              placeholder="sk-or-v1-..."
+              className="ai-agent-input"
+            />
+            <button 
+              onClick={handleDefinirChaveAPI}
+              disabled={carregando}
+              className="ai-agent-btn ai-agent-btn-primary"
+            >
+              {carregando ? '⏳ Validando...' : '✓ Validar'}
+            </button>
           </div>
 
-          <form onSubmit={handleSendPrompt} className="prompt-form">
-            <input
-              type="text"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="What would you like me to change? Use natural language..."
-              className="prompt-input"
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              className="btn-send"
-              disabled={loading || !prompt.trim()}
-            >
-              {loading ? '⏳ Thinking...' : '→ Send'}
-            </button>
-          </form>
+          {erroMensagem && <div className="ai-agent-erro">{erroMensagem}</div>}
+          {status && <div className="ai-agent-status">{status}</div>}
         </div>
       )}
 
-      {tabActive === 'changes' && (
-        <div className="ai-changes-panel">
-          {messages.filter(m => m.type === 'ai' && m.applied?.length > 0).length === 0 ? (
-            <div className="empty-state">
-              <p>No changes applied yet</p>
-              <p>Ask the AI to modify something and changes will appear here</p>
-            </div>
-          ) : (
-            <div className="changes-list">
-              {messages.map((msg, idx) => {
-                if (msg.type !== 'ai' || !msg.applied?.length) return null;
-                return (
-                  <div key={idx} className="change-group">
-                    <h3>Applied Changes</h3>
-                    {msg.applied.map((change, i) => (
-                      <div key={i} className={`change-item change-${change.status}`}>
-                        <strong>{change.file}</strong>
-                        <p>{change.message}</p>
-                      </div>
-                    ))}
+      {/* INTERFACE CHAT (quando configurado) */}
+      {chaveValida && (
+        <>
+          {/* ABAS */}
+          <div className="ai-agent-tabs">
+            <button 
+              className={`ai-agent-tab ${abaAtiva === 'chat' ? 'ativo' : ''}`}
+              onClick={() => setAbaAtiva('chat')}
+            >
+              💬 Chat
+            </button>
+            <button 
+              className={`ai-agent-tab ${abaAtiva === 'modelos' ? 'ativo' : ''}`}
+              onClick={() => setAbaAtiva('modelos')}
+            >
+              🤖 Modelos ({modelos.length})
+            </button>
+            <button 
+              className="ai-agent-tab ai-agent-tab-desconectar"
+              onClick={desconectar}
+            >
+              🚪 Desconectar
+            </button>
+          </div>
+
+          {/* ABA CHAT */}
+          {abaAtiva === 'chat' && (
+            <div className="ai-agent-chat">
+              <div className="ai-agent-mensagens">
+                {mensagens.length === 0 && (
+                  <div className="ai-agent-vazio">
+                    <div>👋 Bem-vindo ao Agente de IA!</div>
+                    <div style={{marginTop: 10, fontSize: 12, color: 'var(--muted)'}}>
+                      Descreva o que quer fazer e a IA vai analisar seu código e fazer mudanças.
+                    </div>
+                    <div style={{marginTop: 10, fontSize: 11, color: 'var(--muted)'}}>Exemplos:</div>
+                    <ul style={{fontSize: 11, color: 'var(--muted)', marginLeft: 20}}>
+                      <li>"Mude o fundo do dashboard para vermelho escuro"</li>
+                      <li>"Adicione um botão de logout na navbar"</li>
+                      <li>"Crie um novo componente chamado CartaoUsuario"</li>
+                    </ul>
                   </div>
-                );
-              })}
+                )}
+
+                {mensagens.map((msg, i) => (
+                  <div key={i} className={`ai-agent-mensagem ${msg.role}`}>
+                    <div className="ai-agent-mensagem-avatar">
+                      {msg.role === 'usuario' ? '👤' : '🤖'}
+                    </div>
+                    <div className="ai-agent-mensagem-corpo">
+                      <div className="ai-agent-mensagem-texto">
+                        {msg.conteudo}
+                      </div>
+                      {msg.mudancas && msg.mudancas.length > 0 && (
+                        <div className="ai-agent-mudancas">
+                          <div className="ai-agent-mudancas-titulo">📝 Mudanças:</div>
+                          {msg.mudancas.map((mud, j) => (
+                            <div key={j} className="ai-agent-mudanca">
+                              📄 {mud.arquivo}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                <div ref={refFimMensagens} />
+              </div>
+
+              {erroMensagem && <div className="ai-agent-erro">{erroMensagem}</div>}
+              {status && <div className="ai-agent-status">{status}</div>}
+
+              <form onSubmit={handleEnviarPrompt} className="ai-agent-form">
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Descreva o que quer fazer... (Shift+Enter para nova linha)"
+                  className="ai-agent-textarea"
+                  disabled={carregando}
+                  rows="3"
+                />
+                <div className="ai-agent-form-botoes">
+                  <button 
+                    type="submit" 
+                    disabled={carregando || !prompt.trim()}
+                    className="ai-agent-btn ai-agent-btn-primary"
+                  >
+                    {carregando ? '⏳ Processando...' : '📤 Enviar'}
+                  </button>
+                  {mensagens.length > 0 && (
+                    <button 
+                      type="button" 
+                      onClick={limparConversas}
+                      className="ai-agent-btn ai-agent-btn-secondary"
+                    >
+                      🗑️ Limpar
+                    </button>
+                  )}
+                </div>
+              </form>
             </div>
           )}
-        </div>
+
+          {/* ABA MODELOS */}
+          {abaAtiva === 'modelos' && (
+            <div className="ai-agent-modelos">
+              <div className="ai-agent-modelos-lista">
+                {modelos.length === 0 ? (
+                  <div className="ai-agent-vazio">Nenhum modelo disponível</div>
+                ) : (
+                  modelos.map((modelo, i) => (
+                    <div
+                      key={i}
+                      className={`ai-agent-modelo ${modeloSelecionado === modelo.id ? 'selecionado' : ''}`}
+                      onClick={() => setModeloSelecionado(modelo.id)}
+                    >
+                      <div className="ai-agent-modelo-nome">{modelo.name}</div>
+                      <div className="ai-agent-modelo-info">{modelo.description || ''}</div>
+                      <div className="ai-agent-modelo-tier">{modelo.pricing_tier}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
-
-      {tabActive === 'info' && (
-        <div className="ai-info-panel">
-          <h3>About AI Agent</h3>
-          <p>
-            This AI agent analyzes your code and makes changes based on your requests.
-          </p>
-
-          <h4>How it works:</h4>
-          <ol>
-            <li>You describe what you want changed in natural language</li>
-            <li>The AI analyzes your project structure</li>
-            <li>It generates the necessary code changes</li>
-            <li>Changes are automatically applied to your files</li>
-            <li>Changes are committed to git</li>
-          </ol>
-
-          <h4>✨ Recommended Free Models:</h4>
-          <ul className="model-list">
-            {models.recommended_for_development?.map((model) => (
-              <li key={model.id}>
-                <strong>{model.name}</strong>
-                <p>{model.description}</p>
-                <small>{model.best_for}</small>
-              </li>
-            ))}
-          </ul>
-
-          {status && <div className="status-message">{status}</div>}
-        </div>
-      )}
-
-      {status && <div className="status-bar">{status}</div>}
     </div>
   );
 };
 
-export default AIAgent;
+export default AgentIA;
