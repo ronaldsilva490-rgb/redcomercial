@@ -18,7 +18,7 @@ const SERVICE_ICON = {
   supabase:     Database,
   vercel:       Globe,
   github:       GitBranch,
-  huggingface:  Cloud,
+  github_backend: GitBranch,
 }
 
 function StatusDot({ ok }) {

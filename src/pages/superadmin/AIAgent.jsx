@@ -33,16 +33,16 @@ const DEFAULT_MODELS = {
 
 // ─── Tool config (original + patch_file do patch) ────────
 const TOOL_CFG = {
-  read_file:     { Icon: FileCode,  color: '#3B82F6', label: 'Lendo frontend (GitHub)' },
-  write_file:    { Icon: FileCode,  color: '#22C55E', label: 'Escrevendo frontend (GitHub)' },
-  list_files:    { Icon: Terminal,  color: '#6B7280', label: 'Listando frontend (GitHub)' },
-  read_file_hf:  { Icon: FileCode,  color: '#FB923C', label: 'Lendo backend (HF Space)' },
-  write_file_hf: { Icon: FileCode,  color: '#EF4444', label: 'Escrevendo backend (HF Space)' },
-  list_files_hf: { Icon: Terminal,  color: '#9CA3AF', label: 'Listando backend (HF Space)' },
+  read_file:     { Icon: FileCode,  color: '#3B82F6', label: 'Lendo arquivo (GitHub)' },
+  write_file:    { Icon: FileCode,  color: '#22C55E', label: 'Escrevendo arquivo (GitHub)' },
+  list_files:    { Icon: Terminal,  color: '#6B7280', label: 'Listando arquivos (GitHub)' },
+  read_file_hf:  { Icon: FileCode,  color: '#FB923C', label: 'Lendo backend (GitHub→Fly.io)' },
+  write_file_hf: { Icon: FileCode,  color: '#EF4444', label: 'Escrevendo backend (GitHub→Fly.io)' },
+  list_files_hf: { Icon: Terminal,  color: '#9CA3AF', label: 'Listando backend (GitHub→Fly.io)' },
   run_sql:       { Icon: Database,  color: '#F59E0B', label: 'Executando SQL' },
   list_tenants:  { Icon: Database,  color: '#F97316', label: 'Buscando empresas' },
-  patch_file:    { Icon: FileCode,  color: '#22C55E', label: 'Patch frontend (GitHub)' },   // ← novo
-  patch_file_hf: { Icon: FileCode,  color: '#EF4444', label: 'Patch backend (HF Space)' }, // ← novo
+  patch_file:    { Icon: FileCode,  color: '#22C55E', label: 'Patch arquivo (GitHub)' },
+  patch_file_hf: { Icon: FileCode,  color: '#EF4444', label: 'Patch backend (GitHub→Fly.io)' },
   vercel_deploy: { Icon: Globe,     color: '#00C7B7', label: 'Deploy Vercel' },
   github_commit: { Icon: GitBranch, color: '#A78BFA', label: 'Commit GitHub' },
 }
@@ -76,22 +76,21 @@ function fmtDate(ts) {
   return new Date(ts).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
-// ─── HF Ops executor (pós-SSE) ───────────────────────────
+// ─── Ops executor (pós-SSE) — commita backend no GitHub → Fly.io ────
 async function _execHfOps(ops, convId, updateLastMsg, attempt = 1) {
   const MAX_ATTEMPTS = 3
-  const RETRY_DELAY  = 4000  // 4s entre tentativas
+  const RETRY_DELAY  = 4000
 
-  updateLastMsg(m => ({ ...m, status: `📦 Commitando ${ops.length} arquivo(s) no HF Space... (${attempt}/${MAX_ATTEMPTS})` }))
+  updateLastMsg(m => ({ ...m, status: `📦 Commitando ${ops.length} arquivo(s) no GitHub... (${attempt}/${MAX_ATTEMPTS})` }))
 
   try {
     const token = localStorage.getItem('access_token')
-    const res   = await fetch(`${API_BASE}/api/superadmin/ai/exec-hf-ops`, {
+    const res   = await fetch(`${API_BASE}/api/superadmin/ai/exec-ops`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body:    JSON.stringify({ ops }),
     })
 
-    // Erro HTTP explícito
     if (!res.ok) {
       let errText = `HTTP ${res.status}`
       try { const e = await res.json(); errText = JSON.stringify(e) } catch {}
@@ -101,17 +100,14 @@ async function _execHfOps(ops, convId, updateLastMsg, attempt = 1) {
     const data    = await res.json()
     const results = data.results || []
 
-    console.log('[HF exec-hf-ops] resultado:', data)
-
     // Atualiza badges queued→resultado real por ordem de fila
     let queuedIdx = 0
     updateLastMsg(m => {
       const newToolCalls = [...(m.toolCalls || [])]
       for (let i = 0; i < newToolCalls.length; i++) {
         const tc = newToolCalls[i]
-        // Detecta badges HF enfileirados: write_file ou patch_file com result.queued e path backend/
-        const isHfQueued = (tc.tool === 'write_file' || tc.tool === 'patch_file') && tc.result?.queued
-        if (isHfQueued) {
+        const isQueued = (tc.tool === 'write_file' || tc.tool === 'patch_file') && tc.result?.queued
+        if (isQueued) {
           const realResult = results[queuedIdx]?.result ?? { error: 'Sem resultado' }
           newToolCalls[i] = { ...tc, result: realResult, running: false }
           queuedIdx++
@@ -120,7 +116,6 @@ async function _execHfOps(ops, convId, updateLastMsg, attempt = 1) {
       return { ...m, toolCalls: newToolCalls, status: null }
     })
 
-    // Checa falhas individuais
     const failures = results.filter(r => r.result?.error)
     if (failures.length > 0) {
       const failMsg = failures.map(r => {
@@ -131,30 +126,28 @@ async function _execHfOps(ops, convId, updateLastMsg, attempt = 1) {
       updateLastMsg(m => ({
         ...m,
         pendingHfOps: ops,
-        content: (m.content || '') + `\n\n❌ **${failures.length} commit(s) HF falharam:**\n\`\`\`\n${failMsg}\n\`\`\`\n💡 Verifique se HF_TOKEN e HF_SPACE estão corretos no .env do Space. Use o botão **Retentar** abaixo ou acesse **/api/superadmin/ai/test-hf** para diagnóstico.`,
+        content: (m.content || '') + `\n\n❌ **${failures.length} commit(s) falharam:**\n\`\`\`\n${failMsg}\n\`\`\`\n💡 Verifique se GITHUB_TOKEN e GITHUB_BACKEND_REPO estão corretos nas variáveis do Fly.io. Use o botão **Retentar** abaixo.`,
       }))
     } else {
       const sha = data.commit || results[0]?.result?.commit || '✓'
       updateLastMsg(m => ({
         ...m,
         pendingHfOps: null,
-        content: (m.content || '') + `\n\n✅ **${results.length} arquivo(s) commitado(s) no HF Space.** SHA: \`${sha}\`. Space reiniciará em ~30s.`,
+        content: (m.content || '') + `\n\n✅ **${results.length} arquivo(s) commitado(s) no GitHub.** SHA: \`${sha}\`. GitHub Action vai rodar fly deploy em ~60s.`,
       }))
     }
 
   } catch (err) {
-    console.error('[HF exec-hf-ops] erro:', err)
     if (attempt < MAX_ATTEMPTS) {
       updateLastMsg(m => ({ ...m, status: `⚠️ Tentativa ${attempt} falhou (${err.message}). Retentando em ${RETRY_DELAY/1000}s...` }))
       await new Promise(r => setTimeout(r, RETRY_DELAY))
       return _execHfOps(ops, convId, updateLastMsg, attempt + 1)
     }
-    // Falhou nas 3 tentativas
     updateLastMsg(m => ({
       ...m,
       status:       null,
       pendingHfOps: ops,
-      content: (m.content || '') + `\n\n❌ **Não foi possível commitar no HF Space após ${MAX_ATTEMPTS} tentativas.**\nÚltimo erro: \`${err.message}\`\n\nUse o botão **Retentar commits HF** abaixo ou acesse:\n\`${API_BASE}/api/superadmin/ai/test-hf\` para diagnóstico.`,
+      content: (m.content || '') + `\n\n❌ **Não foi possível commitar no GitHub após ${MAX_ATTEMPTS} tentativas.**\nÚltimo erro: \`${err.message}\`\n\nUse o botão **Retentar** abaixo.`,
     }))
   }
 }
@@ -295,7 +288,7 @@ function Message({ msg, streaming }) {
         {msg.pendingHfOps?.length > 0 && !streaming && (
           <button onClick={() => onRetryHfOps && onRetryHfOps(msg.pendingHfOps)}
             style={{ display:'flex', alignItems:'center', gap:6, marginTop:8, padding:'7px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.4)', background:'rgba(239,68,68,0.08)', color:'#EF4444', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
-            <RefreshCw size={12}/> Retentar {msg.pendingHfOps.length} commit(s) HF
+            <RefreshCw size={12}/> Retentar {msg.pendingHfOps.length} commit(s)
           </button>
         )}
       </div>
@@ -570,7 +563,7 @@ export default function AIAgent() {
       title: 'Nova conversa', ts: Date.now(),
       messages: [{
         role: 'assistant', ts: Date.now(), toolCalls: [],
-        content: 'Olá! Sou o **RED AI Agent** rodando localmente via Ollama.\n\n- 📁 **Frontend** (GitHub → Vercel): leio e edito qualquer arquivo .jsx/.js\n- 🐍 **Backend** (Hugging Face): leio e edito qualquer arquivo .py\n- 🗄️ **Banco** (Supabase): executo SQL\n- 🏢 **Empresas**: listo e gerencio tenants\n\nConfigure a URL do ngrok no botão **Configurar** e escolha seu modelo Llama/Qwen.',
+        content: 'Olá! Sou o **RED AI Agent** rodando localmente via Ollama.\n\n- 📁 **Frontend** (GitHub → Vercel): leio e edito qualquer arquivo .jsx/.js\n- 🐍 **Backend** (GitHub → Fly.io): leio e edito qualquer arquivo .py\n- 🗄️ **Banco** (Supabase): executo SQL\n- 🏢 **Empresas**: listo e gerencio tenants\n\nConfigure a URL do ngrok no botão **Configurar** e escolha seu modelo Llama/Qwen.',
       }],
     }
     const updated = [conv, ...convs]
@@ -719,11 +712,9 @@ export default function AIAgent() {
           else if (evt.type === 'error')      updateLastMsg(m => ({ ...m, content: `❌ ${evt.text}`, status: null }))
           else if (evt.type === 'done') {
             updateLastMsg(m => ({ ...m, status: null }))
-            const pendingHfOps = evt.pending_hf_ops || []
-            if (pendingHfOps.length > 0) {
-              // SSE fechou — agora é seguro commitar no HF sem matar a conexão
-              updateLastMsg(m => ({ ...m, status: `⏳ Commitando ${pendingHfOps.length} arquivo(s) no HF Space...` }))
-              // updater fixado no convId da conversa que gerou os ops — imune a troca de conversa
+            const pendingOps = evt.pending_ops || evt.pending_hf_ops || []
+            if (pendingOps.length > 0) {
+              updateLastMsg(m => ({ ...m, status: `⏳ Commitando ${pendingOps.length} arquivo(s) no GitHub...` }))
               const fixedUpdater = (updFn) => setConvs(prev => {
                 const u = prev.map(c => {
                   if (c.id !== convId) return c
@@ -733,7 +724,7 @@ export default function AIAgent() {
                 })
                 saveJ(K.CONVS, u); return u
               })
-              _execHfOps(pendingHfOps, convId, fixedUpdater)
+              _execHfOps(pendingOps, convId, fixedUpdater)
             }
           }
         }
