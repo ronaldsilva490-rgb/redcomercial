@@ -115,12 +115,16 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => {
     const duration = Date.now() - response.config._startTime
-    logger.logRequest(
-      response.config.method?.toUpperCase(),
-      response.config.url?.replace(response.config.baseURL, ''),
-      response.status,
-      duration
-    )
+    // Evita logs recursivos (não loga requisições para a própria rota de logs)
+    const url = response.config.url?.replace(response.config.baseURL, '')
+    if (!url?.includes('/api/superadmin/logs')) {
+      logger.logRequest(
+        response.config.method?.toUpperCase(),
+        url,
+        response.status,
+        duration
+      )
+    }
     return response
   },
   (error) => {
@@ -129,16 +133,20 @@ api.interceptors.response.use(
       const duration = Date.now() - config._startTime
       const status = error.response?.status || 0
       const message = error.message
+      const url = config.url?.replace(config.baseURL, '')
       
-      logger.logRequest(
-        config.method?.toUpperCase(),
-        config.url?.replace(config.baseURL, ''),
-        status,
-        duration
-      )
+      // Evita logs recursivos
+      if (!url?.includes('/api/superadmin/logs')) {
+        logger.logRequest(
+          config.method?.toUpperCase(),
+          url,
+          status,
+          duration
+        )
+      }
 
-      // Log adicional para erros
-      if (status >= 400) {
+      // Log adicional para erros (também filtra logs)
+      if (status >= 400 && !url?.includes('/api/superadmin/logs')) {
         logger.error(`API Error: ${config.method?.toUpperCase()} ${config.url}`, {
           status,
           statusText: error.response?.statusText,
