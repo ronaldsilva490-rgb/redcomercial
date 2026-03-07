@@ -78,27 +78,55 @@ class ServicoAgentIA {
 
   async obterModelos(chaveAPI = this.chaveAPI) {
     try {
-      console.log('📥 Buscando modelos do backend...');
-      const resposta = await fetch(`${URL_API_BASE}/api/superadmin/ai-agent/models`, {
+      if (!chaveAPI) {
+        throw new Error('Chave de API não fornecida');
+      }
+
+      console.log('📥 Buscando modelos do OpenRouter...');
+      
+      // Chamar direto o OpenRouter em vez do backend
+      const resposta = await fetch('https://api.openrouter.io/api/v1/models', {
         method: 'GET',
         headers: {
-          'X-API-Key': chaveAPI || this.chaveAPI,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${chaveAPI}`,
+          'HTTP-Referer': 'https://redcomercialweb.vercel.app',
+          'X-Title': 'RedCommercial AI Agent'
         }
       });
 
       console.log('Status de modelos:', resposta.status);
 
+      if (resposta.status === 401) {
+        throw new Error('Chave de API inválida ou expirada');
+      }
+
       if (!resposta.ok) {
-        const erro = await resposta.json().catch(() => ({ erro: 'Erro ao carregar' }));
-        console.error('Erro ao obter modelos:', erro);
-        throw new Error(erro.erro || `Erro HTTP ${resposta.status}`);
+        throw new Error(`Erro HTTP ${resposta.status} ao buscar modelos`);
       }
 
       const dados = await resposta.json();
-      console.log('✓ Modelos recebidos:', dados);
-      this.modelos = dados;
-      return dados;
+      const modelos = dados.data || [];
+      
+      // Processar e ordenar modelos recomendados
+      const modelosProcessados = modelos.map(m => ({
+        id: m.id,
+        name: m.name || m.id,
+        description: m.description || '',
+        pricing: m.pricing || {},
+        is_recommended: ['openrouter/auto', 'meta-llama/llama-2-70b-chat', 'mistralai/mistral-7b-instruct'].includes(m.id)
+      }));
+
+      // Ordenar com recomendados primeiro
+      modelosProcessados.sort((a, b) => {
+        if (a.is_recommended === b.is_recommended) {
+          return a.name.localeCompare(b.name);
+        }
+        return b.is_recommended - a.is_recommended;
+      });
+
+      console.log(`✓ ${modelosProcessados.length} modelos recebidos`);
+      this.modelos = modelosProcessados;
+      return modelosProcessados;
     } catch (erro) {
       console.error('❌ Erro ao obter modelos:', erro);
       throw new Error(`Falha ao carregar modelos: ${erro.message}`);
@@ -107,32 +135,68 @@ class ServicoAgentIA {
 
   async enviarPrompt(prompt, modelo, chaveAPI = this.chaveAPI) {
     try {
-      console.log('📤 Enviando prompt para IA:', { prompt, modelo });
-      const resposta = await fetch(`${URL_API_BASE}/api/superadmin/ai-agent/chat`, {
+      if (!chaveAPI) {
+        throw new Error('Chave de API não fornecida');
+      }
+
+      if (!modelo) {
+        throw new Error('Modelo não selecionado');
+      }
+
+      console.log('📤 Enviando para OpenRouter:', { prompt, modelo });
+      
+      const resposta = await fetch('https://api.openrouter.io/api/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${chaveAPI}`,
+          'HTTP-Referer': 'https://redcomercialweb.vercel.app',
+          'X-Title': 'RedCommercial AI Agent',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
-          prompt,
-          modelo,
-          api_key: chaveAPI,
-          aplicar_mudancas: true
+          model: modelo,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2048
         })
       });
 
-      console.log('Status da resposta de chat:', resposta.status);
+      console.log('Status da resposta:', resposta.status);
+
+      if (resposta.status === 401) {
+        throw new Error('Chave de API inválida ou expirada');
+      }
+
+      if (resposta.status === 429) {
+        throw new Error('Muitas requisições - tente novamente mais tarde');
+      }
 
       if (!resposta.ok) {
-        const erro = await resposta.json().catch(() => ({ erro: 'Erro desconhecido' }));
+        const erro = await resposta.json().catch(() => ({ error: { message: 'Erro desconhecido' } }));
+        const msg = erro.error?.message || `Erro HTTP ${resposta.status}`;
         console.error('Erro de chat:', erro);
-        throw new Error(erro.erro || `Erro HTTP ${resposta.status}`);
+        throw new Error(msg);
       }
 
       const dados = await resposta.json();
-      console.log('✓ Resposta da IA:', dados);
-      return dados;
+      const resposta_ia = dados.choices?.[0]?.message?.content || 'Sem resposta';
+      
+      console.log('✓ Resposta da IA recebida');
+      
+      return {
+        resposta: resposta_ia,
+        message: resposta_ia,
+        modelo_usado: modelo,
+        tokens_usados: dados.usage || {}
+      };
     } catch (erro) {
       console.error('❌ Erro ao enviar prompt:', erro);
-      throw new Error(`Falha ao processar prompt: ${erro.message}`);
+      throw new Error(`Falha ao processar: ${erro.message}`);
     }
   }
 }
