@@ -37,6 +37,8 @@ export default async function handler(req, res) {
 
     console.log(`🔄 Proxy ${method} ${path}`);
     console.log(`Auth header:`, headers.authorization ? 'Sim' : 'Não');
+    console.log(`Body type:`, typeof body);
+    console.log(`Body:`, body ? (typeof body === 'string' ? body.substring(0, 100) : JSON.stringify(body).substring(0, 100)) : 'Nenhum');
 
     if (!headers.authorization) {
       return res.status(400).json({
@@ -49,6 +51,15 @@ export default async function handler(req, res) {
     
     console.log(`📤 Chamando: ${url}`);
 
+    // Prepara o body corretamente
+    let requestBody = undefined;
+    if (method !== 'GET' && method !== 'HEAD') {
+      // Se body é objeto, converte para JSON
+      // Se já é string, usa direto
+      requestBody = typeof body === 'string' ? body : JSON.stringify(body);
+      console.log(`Body a enviar:`, requestBody.substring(0, 100));
+    }
+
     // Faz a requisição pro OpenRouter
     const response = await fetch(url, {
       method: method,
@@ -59,16 +70,18 @@ export default async function handler(req, res) {
         'Content-Type': headers['content-type'] || 'application/json',
         'User-Agent': 'RedCommercial-Proxy/1.0'
       },
-      body: method !== 'GET' && method !== 'HEAD' ? JSON.stringify(body) : undefined
+      body: requestBody
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
     
     console.log(`✓ Status ${response.status}`);
+    console.log(`Response data:`, JSON.stringify(data).substring(0, 200));
     
     res.status(response.status).json(data);
   } catch (error) {
     console.error('❌ Erro no proxy:', error.message);
+    console.error('Stack:', error.stack);
     res.status(500).json({
       erro: 'Erro ao fazer proxy com OpenRouter',
       detalhes: error.message
