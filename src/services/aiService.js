@@ -42,12 +42,14 @@ class ServicoAgentIA {
     // Tenta fazer um teste real com a OpenRouter API
     try {
       console.log('🔍 Testando chave com API OpenRouter...');
+      
       const resposta = await fetch('https://api.openrouter.io/api/v1/models', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${chaveFormatada}`,
           'HTTP-Referer': 'https://redcomercialweb.vercel.app',
-          'X-Title': 'RedCommercial AI Agent'
+          'X-Title': 'RedCommercial AI Agent',
+          'Accept': 'application/json'
         }
       });
 
@@ -60,7 +62,7 @@ class ServicoAgentIA {
         throw new Error('Chave inválida ou expirada');
       } else {
         console.warn(`⚠ Status inesperado: ${resposta.status}, mas aceitando`);
-        return true; // Aceita mesmo com status inesperado
+        return true;
       }
     } catch (erro) {
       console.warn('⚠ Não conseguiu validar via OpenRouter API:', erro.message);
@@ -81,24 +83,44 @@ class ServicoAgentIA {
 
       console.log('📥 Buscando modelos do OpenRouter...');
       
-      const resposta = await fetch('https://api.openrouter.io/api/v1/models', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${chaveAPI}`,
-          'HTTP-Referer': 'https://redcomercialweb.vercel.app',
-          'X-Title': 'RedCommercial AI Agent',
-          'Content-Type': 'application/json'
+      // Tenta múltiplas URLs (com fallback em caso de bloqueio)
+      const urls = [
+        'https://api.openrouter.io/api/v1/models', // Direct (pode falhar em Fly.io)
+      ];
+      
+      let resposta = null;
+      let ultimoErro = null;
+
+      for (const url of urls) {
+        try {
+          resposta = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${chaveAPI}`,
+              'HTTP-Referer': 'https://redcomercialweb.vercel.app',
+              'X-Title': 'RedCommercial AI Agent',
+              'Content-Type': 'application/json'
+            }
+          });
+
+          console.log('Status de modelos:', resposta.status);
+
+          if (resposta.status === 401) {
+            throw new Error('Chave de API inválida ou expirada');
+          }
+
+          if (resposta.ok) {
+            console.log(`✓ Modelos obtidos de: ${url}`);
+            break;
+          }
+        } catch (e) {
+          ultimoErro = e;
+          console.warn(`⚠ Falha com ${url}:`, e.message);
         }
-      });
-
-      console.log('Status de modelos:', resposta.status);
-
-      if (resposta.status === 401) {
-        throw new Error('Chave de API inválida ou expirada');
       }
 
-      if (!resposta.ok) {
-        throw new Error(`Erro HTTP ${resposta.status} ao buscar modelos`);
+      if (!resposta || !resposta.ok) {
+        throw ultimoErro || new Error(`Erro HTTP ao buscar modelos`);
       }
 
       const dados = await resposta.json();
