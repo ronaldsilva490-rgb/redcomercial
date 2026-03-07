@@ -1,4 +1,5 @@
 import axios from 'axios'
+import logger from './frontendLogger'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:7860',
@@ -100,6 +101,53 @@ api.interceptors.response.use(
     } finally {
       isRefreshing = false
     }
+  }
+)
+
+// ─── Logger Interceptor ─── 
+// Registra todas as requisições e respostas da API
+api.interceptors.request.use((config) => {
+  // Marca o timestamp para calcular duração
+  config._startTime = Date.now()
+  return config
+})
+
+api.interceptors.response.use(
+  (response) => {
+    const duration = Date.now() - response.config._startTime
+    logger.logRequest(
+      response.config.method?.toUpperCase(),
+      response.config.url?.replace(response.config.baseURL, ''),
+      response.status,
+      duration
+    )
+    return response
+  },
+  (error) => {
+    const config = error.config
+    if (config) {
+      const duration = Date.now() - config._startTime
+      const status = error.response?.status || 0
+      const message = error.message
+      
+      logger.logRequest(
+        config.method?.toUpperCase(),
+        config.url?.replace(config.baseURL, ''),
+        status,
+        duration
+      )
+
+      // Log adicional para erros
+      if (status >= 400) {
+        logger.error(`API Error: ${config.method?.toUpperCase()} ${config.url}`, {
+          status,
+          statusText: error.response?.statusText,
+          message: error.response?.data?.error || message,
+          duration_ms: duration,
+        })
+      }
+    }
+    return Promise.reject(error)
   }
 )
 
