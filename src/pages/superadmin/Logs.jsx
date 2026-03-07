@@ -319,7 +319,6 @@ export default function Logs() {
                       alignItems: 'flex-start',
                       cursor: log.details ? 'pointer' : 'default',
                       transition: 'background 0.2s',
-                      ':hover': log.details && { background: 'rgba(255,255,255,0.03)' }
                     }}
                     onMouseEnter={e => log.details && (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
                     onMouseLeave={e => (e.currentTarget.style.background = bg)}
