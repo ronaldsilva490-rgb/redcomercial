@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import aiService from '../../services/aiService.js';
-import './AIAgent.css';
+import './css/AIAgent.css';
 
 const AIAgent = () => {
   const [apiKey, setApiKey] = useState('');
