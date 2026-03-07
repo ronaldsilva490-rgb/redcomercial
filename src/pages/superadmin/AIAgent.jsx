@@ -36,6 +36,7 @@ const AgentIA = () => {
     try {
       console.log('🔍 Verificando chave de API...');
       setErroMensagem('');
+      setStatus('🔍 Validando chave...');
       const valida = await servicoAgentIA.validarChaveAPI(chave);
       console.log('Resultado da validação:', valida);
       setChaveValida(valida);
@@ -50,8 +51,9 @@ const AgentIA = () => {
       }
     } catch (erro) {
       console.error('Erro ao validar chave:', erro);
-      setErroMensagem(`❌ Erro: ${erro.message || erro}`);
+      setErroMensagem(`❌ ${erro.message || erro}`);
       setChaveValida(false);
+      setStatus('');
     }
   };
 
