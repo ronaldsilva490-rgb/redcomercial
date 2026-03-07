@@ -7,6 +7,9 @@ import useThemeStore from './store/themeStore'
 import Layout         from './components/layout/Layout'
 import Login          from './pages/auth/Login'
 import Register       from './pages/auth/Register'
+import AdminLogin     from './pages/admin/AdminLogin'
+import AdminRegister  from './pages/admin/AdminRegister'
+import AdminDashboard from './pages/admin/AdminDashboard'
 import Dashboard      from './pages/Dashboard'
 import Vehicles       from './pages/vehicles/Vehicles'
 import Clients        from './pages/clients/Clients'
@@ -67,7 +70,8 @@ export default function App() {
       <Routes>
         <Route path="/login"    element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-        <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+        <Route path="/admin/login"    element={<AdminLogin />} />
+        <Route path="/admin/register" element={<AdminRegister />} />        <Route path="/admin/dashboard" element={<AdminDashboard />} />        <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index               element={<Dashboard />} />
           <Route path="vehicles"     element={<Vehicles />} />
           <Route path="clients"      element={<Clients />} />

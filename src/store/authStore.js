@@ -2,8 +2,6 @@ import { create } from 'zustand'
 import api from '../services/api'
 
 const PERSIST_KEYS = [
-  'ai_provider_keys', 'ai_active_provider',
-  'ai_conversations', 'ai_active_conv',
   'theme_config',
 ]
 

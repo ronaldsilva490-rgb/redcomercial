@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
-  Shield, Building2, Bot, Database, GitBranch,
+  Shield, Building2, Database, GitBranch,
   Activity, LogOut, Menu, ScrollText,
 } from 'lucide-react'
 import useAuthStore from '../../store/authStore'
@@ -14,7 +14,6 @@ import toast from 'react-hot-toast'
 const NAV = [
   { to: '/superadmin',          icon: Activity,    label: 'Status do Sistema', end: true },
   { to: '/superadmin/empresas', icon: Building2,   label: 'Empresas' },
-  { to: '/superadmin/ai',       icon: Bot,         label: 'AI Agent' },
   { to: '/superadmin/db',       icon: Database,    label: 'Banco de Dados' },
   { to: '/superadmin/deploy',   icon: GitBranch,   label: 'Deploy / Git' },
   { to: '/superadmin/logs',     icon: ScrollText,  label: 'Logs' },
