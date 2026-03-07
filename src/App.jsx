@@ -29,7 +29,6 @@ import CaixaSessao    from './pages/caixa/CaixaSessao'
 import SuperAdminLayout  from './components/layout/SuperAdminLayout'
 import SystemStatus      from './pages/superadmin/SystemStatus'
 import TenantsOverview   from './pages/superadmin/TenantsOverview'
-import AIAgent           from './pages/superadmin/AIAgent'
 import DBExplorer        from './pages/superadmin/DBExplorer'
 import DeployControl     from './pages/superadmin/DeployControl'
 import Logs              from './pages/superadmin/Logs'
@@ -93,7 +92,6 @@ export default function App() {
         <Route path="/superadmin" element={<PrivateRoute><SuperAdminLayout /></PrivateRoute>}>
           <Route index              element={<SystemStatus />} />
           <Route path="empresas"    element={<TenantsOverview />} />
-          <Route path="ai"          element={<AIAgent />} />
           <Route path="db"          element={<DBExplorer />} />
           <Route path="deploy"      element={<DeployControl />} />
           <Route path="logs"        element={<Logs />} />
