@@ -43,7 +43,6 @@ export default function Logs() {
   const [expandedLog, setExpandedLog]  = useState(null)
   const [refreshRate, setRefreshRate]  = useState(2000)  // 2s por padrão
   const [maxLogs,     setMaxLogs]      = useState(500)
-  const bottomRef = useRef(null)
   const updateIntervalRef = useRef(null)
 
   const load = useCallback(async () => {
@@ -88,10 +87,12 @@ export default function Logs() {
     }
   }, [autoRefresh, refreshRate, isPaused, load])
 
-  // Auto-scroll quando novos logs chegam
+  // Auto-scroll para o TOPO quando novos logs chegam (mais novos no topo)
   useEffect(() => {
-    if (bottomRef.current && autoRefresh && !isPaused) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' })
+    // Scroll para o topo onde estão os logs mais recentes
+    const container = document.querySelector('[style*="overflowY"]')
+    if (container && autoRefresh && !isPaused) {
+      container.scrollTop = 0
     }
   }, [logs, autoRefresh, isPaused])
 
@@ -377,7 +378,7 @@ export default function Logs() {
                 </div>
               )
             })}
-            <div ref={bottomRef} />
+            </div>
           </div>
         </div>
       )}
