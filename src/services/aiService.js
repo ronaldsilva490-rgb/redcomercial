@@ -3,7 +3,7 @@
  * Gerencia comunicação com o agente de IA via OpenRouter
  */
 
-const URL_API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7860';
+const URL_API_BASE = import.meta.env.VITE_API_URL || 'https://redbackend.fly.dev';
 
 class ServicoAgentIA {
   constructor() {
