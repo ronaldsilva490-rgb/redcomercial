@@ -41,15 +41,14 @@ class ServicoAgentIA {
 
     // Tenta fazer um teste real com a OpenRouter API
     try {
-      console.log('🔍 Testando chave com API OpenRouter...');
+      console.log('🔍 Testando chave via proxy Vercel...');
       
-      const resposta = await fetch('https://api.openrouter.io/api/v1/models', {
+      // Usa o proxy também para validação
+      const resposta = await fetch('/api/openrouter?path=models', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${chaveFormatada}`,
-          'HTTP-Referer': 'https://redcomercialweb.vercel.app',
-          'X-Title': 'RedCommercial AI Agent',
-          'Accept': 'application/json'
+          'Content-Type': 'application/json'
         }
       });
 
