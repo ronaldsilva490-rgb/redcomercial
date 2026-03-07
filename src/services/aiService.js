@@ -1,20 +1,20 @@
 /**
  * Serviço de Agente de IA
- * Gerencia comunicação com o agente de IA via OpenRouter
+ * Gerencia comunicação com o agente de IA via Groq (backend)
  */
 
 const URL_API_BASE = import.meta.env.VITE_API_URL || 'https://redbackend.fly.dev';
 
 class ServicoAgentIA {
   constructor() {
-    this.chaveAPI = localStorage.getItem('openrouter_api_key') || '';
+    this.chaveAPI = localStorage.getItem('groq_api_key') || '';
     this.modelos = [];
   }
 
   definirChaveAPI(chave) {
     this.chaveAPI = chave;
-    localStorage.setItem('openrouter_api_key', chave);
-    console.log('✓ Chave de API definida');
+    localStorage.setItem('groq_api_key', chave);
+    console.log('✓ Chave de API Groq definida');
   }
 
   obterChaveAPI() {
@@ -29,34 +29,33 @@ class ServicoAgentIA {
 
     const chaveFormatada = chaveAPI.trim();
     
-    // Verifica se começa com o prefixo correto do OpenRouter
-    if (!chaveFormatada.startsWith('sk-or-v1-')) {
-      throw new Error('Formato de chave inválido - deve começar com sk-or-v1-');
+    // Verifica se começa com o prefixo correto do Groq
+    if (!chaveFormatada.startsWith('gsk_')) {
+      throw new Error('Formato de chave inválido - chave Groq deve começar com gsk_');
     }
 
-    // Verifica o comprimento mínimo
-    if (chaveFormatada.length < 65) {
-      throw new Error('Chave muito curta - formato inválido');
-    }
-
-    // Tenta fazer um teste real com a OpenRouter API
+    // Tenta fazer um teste real com o backend
     try {
-      console.log('🔍 Testando chave via proxy Vercel...');
+      console.log('🔍 Testando chave Groq via backend...');
       
-      // Usa o proxy também para validação
-      const resposta = await fetch('/api/proxy/models', {
-        method: 'GET',
+      const resposta = await fetch(`${URL_API_BASE}/api/superadmin/ai-agent/validate-key`, {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${chaveFormatada}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          api_key: chaveFormatada
+        })
       });
 
-      console.log('Status OpenRouter:', resposta.status);
+      console.log('Status backend:', resposta.status);
 
       if (resposta.status === 200) {
-        console.log('✓ Chave validada com sucesso!');
-        return true;
+        const dados = await resposta.json();
+        if (dados.valida) {
+          console.log('✓ Chave validada com sucesso!');
+          return true;
+        }
       } else if (resposta.status === 401) {
         throw new Error('Chave inválida ou expirada');
       } else {
@@ -64,9 +63,9 @@ class ServicoAgentIA {
         return true;
       }
     } catch (erro) {
-      console.warn('⚠ Não conseguiu validar via OpenRouter API:', erro.message);
+      console.warn('⚠ Não conseguiu validar via backend:', erro.message);
       // Se não conseguir conectar mas o formato está OK, aceita
-      if (chaveFormatada.startsWith('sk-or-v1-') && chaveFormatada.length >= 65) {
+      if (chaveFormatada.startsWith('gsk_') && chaveFormatada.length >= 50) {
         console.log('✓ Formato correto - aceitando chave mesmo sem validação via API');
         return true;
       }
@@ -80,10 +79,10 @@ class ServicoAgentIA {
         throw new Error('Chave de API não fornecida');
       }
 
-      console.log('📥 Buscando modelos via proxy Vercel...');
+      console.log('📥 Buscando modelos via backend...');
       
-      // Usa o proxy do Vercel ao invés de chamar OpenRouter direto
-      const resposta = await fetch('/api/proxy/models', {
+      // Chama o backend
+      const resposta = await fetch(`${URL_API_BASE}/api/superadmin/ai-agent/models`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${chaveAPI}`,
@@ -110,7 +109,7 @@ class ServicoAgentIA {
         name: m.name || m.id,
         description: m.description || '',
         pricing: m.pricing || {},
-        is_recommended: ['openrouter/auto', 'meta-llama/llama-2-70b-chat', 'mistralai/mistral-7b-instruct'].includes(m.id)
+        is_recommended: m.is_recommended || false
       }));
 
       // Ordenar com recomendados primeiro
@@ -128,9 +127,9 @@ class ServicoAgentIA {
       console.error('❌ Erro ao obter modelos:', erro);
       // Se falhar, retorna modelos padrão para que o usuário possa usar
       const modelosPadrao = [
-        { id: 'openrouter/auto', name: 'Auto (Recomendado)', is_recommended: true },
-        { id: 'meta-llama/llama-2-70b-chat', name: 'Llama 2 70B', is_recommended: true },
-        { id: 'mistralai/mistral-7b-instruct', name: 'Mistral 7B', is_recommended: true }
+        { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7b (Recomendado)', is_recommended: true },
+        { id: 'llama2-70b-4096', name: 'Llama 2 70B', is_recommended: true },
+        { id: 'gemma-7b-it', name: 'Gemma 7B', is_recommended: false }
       ];
       console.warn('⚠ Usando modelos padrão');
       this.modelos = modelosPadrao;
@@ -148,25 +147,18 @@ class ServicoAgentIA {
         throw new Error('Modelo não selecionado');
       }
 
-      console.log('📤 Enviando para OpenRouter via proxy Vercel:', { modelo });
+      console.log('📤 Enviando para Groq via backend:', { modelo });
       
-      // Usa o proxy do Vercel ao invés de chamar OpenRouter direto
-      const resposta = await fetch('/api/proxy/chat', {
+      // Chama o backend
+      const resposta = await fetch(`${URL_API_BASE}/api/superadmin/ai-agent/chat`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${chaveAPI}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: modelo,
-          messages: [
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 2048
+          prompt: prompt,
+          modelo: modelo,
+          api_key: chaveAPI
         })
       });
 
@@ -188,15 +180,14 @@ class ServicoAgentIA {
       }
 
       const dados = await resposta.json();
-      const resposta_ia = dados.choices?.[0]?.message?.content || 'Sem resposta';
+      const resposta_ia = dados.resposta || 'Sem resposta';
       
       console.log('✓ Resposta da IA recebida');
       
       return {
         resposta: resposta_ia,
         message: resposta_ia,
-        modelo_usado: modelo,
-        tokens_usados: dados.usage || {}
+        modelo_usado: modelo
       };
     } catch (erro) {
       console.error('❌ Erro ao enviar prompt:', erro);
