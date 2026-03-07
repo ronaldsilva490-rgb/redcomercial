@@ -151,7 +151,7 @@ class ServicoAgentIA {
       console.log('📤 Enviando para OpenRouter via proxy Vercel:', { modelo });
       
       // Usa o proxy do Vercel ao invés de chamar OpenRouter direto
-      const resposta = await fetch('/api/proxy/chat/completions', {
+      const resposta = await fetch('/api/proxy/chat', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${chaveAPI}`,
