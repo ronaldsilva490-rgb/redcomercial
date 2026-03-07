@@ -59,8 +59,7 @@ const AgentIA = () => {
 
   const handleDefinirChaveAPI = async () => {
     if (!entradaChaveAPI.trim()) {
-      setErroMensagem('⚠️ Cole sua chave de API do OpenRouter');
-      return;
+        setErroMensagem('⚠️ Cole sua chave de API do Groq');
     }
 
     setStatus('🔍 Validando chave de API...');
@@ -72,7 +71,7 @@ const AgentIA = () => {
     try {
       setStatus('📦 Carregando modelos...');
       setErroMensagem('');
-      console.log('📥 Buscando modelos do OpenRouter...');
+      console.log('📥 Buscando modelos do Groq...');
       const dados = await servicoAgentIA.obterModelos(chave);
       console.log('✓ Modelos recebidos:', dados);
 
@@ -158,7 +157,7 @@ const AgentIA = () => {
       setChaveValida(false);
       setMensagens([]);
       setModeloSelecionado('');
-      localStorage.removeItem('openrouter_api_key');
+      localStorage.removeItem('groq_api_key');
     }
   };
 
@@ -168,7 +167,7 @@ const AgentIA = () => {
       <div className="ai-agent-header">
         <div className="ai-agent-titulo">
           <span className="ai-agent-icon">🤖</span>
-          <span>Agente de IA (OpenRouter)</span>
+          <span>Agente de IA (Groq)</span>
         </div>
         {chaveValida && <div className="ai-agent-badge">✓ Conectado</div>}
       </div>
@@ -179,7 +178,7 @@ const AgentIA = () => {
           <div className="ai-agent-setup-titulo">🔑 Configure sua Chave de API</div>
           <div className="ai-agent-setup-instrucoes">
             <ol>
-              <li>Acesse <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">openrouter.ai/keys</a></li>
+              <li>Acesse <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer">console.groq.com/keys</a></li>
               <li>Copie sua chave de API</li>
               <li>Cole abaixo</li>
             </ol>
@@ -191,7 +190,7 @@ const AgentIA = () => {
               value={entradaChaveAPI}
               onChange={(e) => setEntradaChaveAPI(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleDefinirChaveAPI()}
-              placeholder="sk-or-v1-..."
+              placeholder="gsk_..."
               className="ai-agent-input"
             />
             <button 
