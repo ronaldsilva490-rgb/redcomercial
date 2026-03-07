@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, ArrowRight, Lock, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, ArrowLeft, Lock, AlertCircle, Settings } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../../services/api'
 import LOGO from '../../assets/logo.png'
@@ -16,6 +16,10 @@ export default function AdminRegister() {
   const [mostrarSenhaConf, setMostrarSenhaConf] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    document.title = 'RED - Gestão Integrada'
+  }, [])
 
   const validar = () => {
     if (!nome || !username || !email || !senha || !senhaConf || !palavraMestre) {
@@ -92,7 +96,7 @@ export default function AdminRegister() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #080808 0%, #1a1a1a 100%)',
+      background: 'linear-gradient(135deg, #000000 0%, #050202 100%)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -101,15 +105,36 @@ export default function AdminRegister() {
       overflow: 'hidden',
       padding: '20px'
     }}>
-      {/* Background Effects */}
+      {/* Gradiente top - vermelho para preto */}
       <div style={{
-        position: 'fixed', inset: 0, pointerEvents: 'none',
-        background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(220,20,30,0.15) 0%, transparent 60%)'
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '400px',
+        pointerEvents: 'none',
+        background: 'linear-gradient(to bottom, rgba(220,20,30,0.25) 0%, rgba(220,20,30,0.12) 30%, transparent 80%)',
+        zIndex: 0,
       }} />
+
+      {/* Efeito grid futurista */}
       <div style={{
-        position: 'fixed', inset: 0, pointerEvents: 'none', opacity: 0.02,
-        backgroundImage: 'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
+        position: 'fixed',
+        inset: 0,
+        pointerEvents: 'none',
+        opacity: 0.08,
+        backgroundImage: 'linear-gradient(rgba(220,20,30,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(220,20,30,0.3) 1px, transparent 1px)',
+        backgroundSize: '50px 50px',
+        zIndex: 0,
+      }} />
+
+      {/* Efeito gradiente radial sutil adicional */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        pointerEvents: 'none',
+        background: 'radial-gradient(ellipse 120% 100% at 50% 0%, rgba(220,20,30,0.08) 0%, transparent 50%)',
+        zIndex: 0,
       }} />
 
       <div style={{ width: '100%', maxWidth: 480, position: 'relative', zIndex: 1 }}>
@@ -120,27 +145,21 @@ export default function AdminRegister() {
             filter: 'drop-shadow(0 0 24px rgba(220,20,30,0.5))'
           }} />
           <div style={{
-            marginTop: 16, fontSize: 24, fontWeight: 700,
-            color: '#fff', letterSpacing: -0.5, marginBottom: 4
+            marginTop: 12, fontSize: 18, fontWeight: 700,
+            color: '#fff', letterSpacing: -0.2
           }}>
-            Criar Admin
-          </div>
-          <div style={{
-            fontSize: 13, color: 'rgba(255,255,255,0.4)',
-            letterSpacing: 1, textTransform: 'uppercase'
-          }}>
-            Novo Administrador do Sistema
+            RED - Gestão Integrada
           </div>
         </div>
 
         {/* Form Card */}
         <div style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
+          background: 'rgba(255,255,255,0.04)',
+          border: '2px solid #c41217',
           borderRadius: 16,
           padding: '32px 28px',
           backdropFilter: 'blur(12px)',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
+          boxShadow: '0 0 15px rgba(196,18,23,0.4), 0 0 25px rgba(196,18,23,0.15), inset 0 0 10px rgba(196,18,23,0.05), 0 24px 64px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
         }}>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Campo Nome */}
@@ -268,10 +287,10 @@ export default function AdminRegister() {
               marginBottom: 8
             }}>
               <label style={{
-                display: 'block', fontSize: 11, fontWeight: 700,
+                display: 'flex', fontSize: 11, fontWeight: 700,
                 color: 'rgba(255,255,255,0.6)', marginBottom: 6,
                 textTransform: 'uppercase', letterSpacing: 0.5,
-                display: 'flex', alignItems: 'center', gap: 6
+                alignItems: 'center', gap: 6
               }}>
                 <Lock size={14} color='#dc141e' /> Palavra-Mestre do Admin
               </label>
@@ -357,14 +376,48 @@ export default function AdminRegister() {
           </a>
         </div>
 
-        {/* Versão */}
+        {/* Rodapé */}
         <div style={{
           marginTop: 24, textAlign: 'center',
           fontSize: 11, color: 'rgba(255,255,255,0.2)', letterSpacing: 1
         }}>
-          RED COMMERCIAL v5.0 — Admin Console
+          RED System Corporation™
         </div>
       </div>
+
+      {/* Botão Flutuante Voltar */}
+      <button
+        onClick={() => navigate('/admin/login')}
+        style={{
+          position: 'fixed',
+          bottom: 32,
+          right: 32,
+          width: 56,
+          height: 56,
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #991414 0%, #6d0a0a 100%)',
+          border: '2px solid #c41217',
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 0 15px rgba(196,18,23,0.4), 0 0 25px rgba(196,18,23,0.15), 0 8px 24px rgba(0,0,0,0.5)',
+          transition: 'all 0.3s ease',
+          zIndex: 99,
+        }}
+        onMouseEnter={e => {
+          e.target.style.transform = 'scale(1.1)'
+          e.target.style.boxShadow = '0 0 20px rgba(196,18,23,0.6), 0 0 35px rgba(196,18,23,0.25), 0 12px 32px rgba(0,0,0,0.6)'
+        }}
+        onMouseLeave={e => {
+          e.target.style.transform = 'scale(1)'
+          e.target.style.boxShadow = '0 0 15px rgba(196,18,23,0.4), 0 0 25px rgba(196,18,23,0.15), 0 8px 24px rgba(0,0,0,0.5)'
+        }}
+        title="Voltar para Login"
+      >
+        <ArrowLeft size={24} />
+      </button>
 
       <style>{`
         @keyframes spin {

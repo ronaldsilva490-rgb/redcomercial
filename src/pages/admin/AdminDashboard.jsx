@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Activity, AlertCircle, CheckCircle, LogOut, RefreshCw, Zap,
-  Users, TrendingUp, Clock, Server, Database, Globe, BarChart3
+  Activity, AlertCircle, CheckCircle, LogOut, RefreshCw, Users, 
+  TrendingUp, Clock, Server, Database, Shield, Settings, Trash2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../../services/api'
@@ -15,75 +15,71 @@ export default function AdminDashboard() {
   const [atualizando, setAtualizando] = useState(false)
   const [stats, setStats] = useState(null)
   const [logs, setLogs] = useState([])
-  const [servicos, setServicos] = useState([])
+  const [admins, setAdmins] = useState([])
+  const [tenants, setTenants] = useState([])
+  const [systemStatus, setSystemStatus] = useState(null)
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null)
+  const [abas, setAbas] = useState('dashboard')
 
   // Verificar autenticação na carga
   useEffect(() => {
-    const verificarAuth = () => {
-      const adminUser = localStorage.getItem('admin_user')
-      const token = localStorage.getItem('admin_token')
+    const adminUser = localStorage.getItem('admin_user')
+    const token = localStorage.getItem('admin_token')
 
-      if (!token || !adminUser) {
-        navigate('/admin/login')
-        return
-      }
-
-      setAdmin(JSON.parse(adminUser))
-      setCarregando(false)
-      carregarDados()
+    if (!token || !adminUser) {
+      navigate('/admin/login')
+      return
     }
 
-    verificarAuth()
+    setAdmin(JSON.parse(adminUser))
+    setCarregando(false)
   }, [navigate])
 
-  // Auto refresh a cada 30 segundos
-  useEffect(() => {
-    const interval = setInterval(carregarDados, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const carregarDados = async () => {
+  const carregarDados = useCallback(async () => {
     try {
       setAtualizando(true)
       const token = localStorage.getItem('admin_token')
 
-      // Simular carregamento de stats
-      const statsData = {
-        total_tenants_ativos: 12,
-        tenants_restaurantes: 5,
-        tenants_concessionarias: 4,
-        tenants_comercios: 3,
-        total_usuarios_ativos: 48,
-        logs_24h: 342,
-        erros_24h: 8
-      }
-
-      // Simular logs
-      const logsData = [
-        { id: 1, acao: 'login', admin: 'admin', timestamp: new Date(), status: 'sucesso' },
-        { id: 2, acao: 'criar_usuario', admin: 'admin', timestamp: new Date(Date.now() - 60000), status: 'sucesso' },
-        { id: 3, acao: 'deletar_sessao', admin: 'admin', timestamp: new Date(Date.now() - 300000), status: 'erro' }
+      // Chamar as ROTAS REAIS do backend
+      const promises = [
+        api.get('/api/superadmin/status', { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
+        api.get('/api/auth/admin/list', { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
+        api.get('/api/superadmin/tenants', { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
+        api.get('/api/superadmin/logs', { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
       ]
 
-      // Simular serviços
-      const servicosData = [
-        { nome: 'API Backend', status: 'online', latencia: 45, url: 'https://redbackend.fly.dev' },
-        { nome: 'Frontend', status: 'online', latencia: 120, url: 'https://redcomercialweb.vercel.app' },
-        { nome: 'Banco de Dados', status: 'online', latencia: 28, url: 'Supabase PostgreSQL' },
-        { nome: 'Serviço de Email', status: 'offline', latencia: null, url: 'SendGrid' }
-      ]
+      const [statusRes, adminsRes, tenantsRes, logsRes] = await Promise.all(promises)
 
-      setStats(statsData)
-      setLogs(logsData)
-      setServicos(servicosData)
+      // Processar responses
+      if (statusRes?.data?.data) setSystemStatus(statusRes.data.data)
+      if (adminsRes?.data?.data) setAdmins(adminsRes.data.data)
+      if (tenantsRes?.data?.data) setTenants(tenantsRes.data.data)
+      if (logsRes?.data?.data) setLogs(logsRes.data.data)
+
+      // Stats
+      setStats({
+        total_tenants_ativos: tenantsRes?.data?.data?.length || 0,
+        total_usuarios_ativos: adminsRes?.data?.data?.length || 0,
+        logs_24h: logsRes?.data?.data?.length || 0,
+        erros_24h: 0
+      })
+
       setUltimaAtualizacao(new Date())
       setAtualizando(false)
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
       setAtualizando(false)
     }
-  }
+  }, [])
+
+  // Auto refresh a cada 30 segundos - SÓ DEPOIS QUE CARREGOU
+  useEffect(() => {
+    if (admin) {
+      carregarDados()
+      const interval = setInterval(carregarDados, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [admin, carregarDados])
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token')
@@ -97,6 +93,32 @@ export default function AdminDashboard() {
     await carregarDados()
   }
 
+  const desativarAdmin = async (adminId) => {
+    if (!window.confirm('Desativar este admin?')) return
+    try {
+      await api.post(`/api/auth/admin/deactivate/${adminId}`, {}, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      })
+      toast.success('Admin desativado')
+      carregarDados()
+    } catch (err) {
+      toast.error('Erro ao desativar')
+    }
+  }
+
+  const deletarAdmin = async (adminId) => {
+    if (!window.confirm('DELETAR este admin?')) return
+    try {
+      await api.delete(`/api/auth/admin/${adminId}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      })
+      toast.success('Admin deletado')
+      carregarDados()
+    } catch (err) {
+      toast.error('Erro ao deletar')
+    }
+  }
+
   if (carregando) {
     return (
       <div style={{
@@ -104,7 +126,8 @@ export default function AdminDashboard() {
         background: 'linear-gradient(135deg, #080808 0%, #1a1a1a 100%)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        fontFamily: "'Outfit', sans-serif"
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{
@@ -112,7 +135,7 @@ export default function AdminDashboard() {
             borderTopColor: '#dc141e', borderRadius: '50%',
             animation: 'spin 1s linear infinite', margin: '0 auto 16px'
           }} />
-          <div style={{ color: 'rgba(255,255,255,0.6)' }}>Carregando dashboard...</div>
+          <div style={{ color: 'rgba(255,255,255,0.6)' }}>Carregando...</div>
         </div>
       </div>
     )
@@ -131,7 +154,7 @@ export default function AdminDashboard() {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 40,
+        marginBottom: 32,
         padding: '20px',
         background: 'rgba(255,255,255,0.03)',
         border: '1px solid rgba(255,255,255,0.07)',
@@ -141,9 +164,9 @@ export default function AdminDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <img src={LOGO} alt="RED" style={{ width: 50, height: 50 }} />
           <div>
-            <div style={{ fontSize: 20, fontWeight: 700 }}>Painel Admin</div>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>🛡️ Admin</div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>
-              Bem-vindo, <strong>{admin?.nome}</strong>
+              <strong>{admin?.nome}</strong>
             </div>
           </div>
         </div>
@@ -159,15 +182,10 @@ export default function AdminDashboard() {
               borderRadius: 8,
               color: '#fff',
               cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
               fontSize: 13,
-              transition: 'all 0.2s'
             }}
           >
             <RefreshCw size={14} style={{ animation: atualizando ? 'spin 1s linear infinite' : 'none' }} />
-            Atualizar
           </button>
           <button
             onClick={handleLogout}
@@ -178,258 +196,273 @@ export default function AdminDashboard() {
               borderRadius: 8,
               color: '#dc141e',
               cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
               fontSize: 13,
-              transition: 'all 0.2s'
             }}
           >
             <LogOut size={14} />
-            Sair
           </button>
         </div>
       </div>
 
-      {/* Topo com status e última atualização */}
+      {/* Abas */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: 16,
-        marginBottom: 24
+        display: 'flex',
+        gap: 8,
+        marginBottom: 24,
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        paddingBottom: 16,
+        overflowX: 'auto'
       }}>
-        {/* Card Status Geral */}
-        <div style={{
-          padding: 16,
-          background: 'rgba(34, 197, 94, 0.1)',
-          border: '1px solid rgba(34, 197, 94, 0.2)',
-          borderRadius: 12,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12
-        }}>
-          <CheckCircle size={24} color='#22c55e' />
-          <div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Status</div>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>Sistema Online</div>
-          </div>
-        </div>
-
-        {/* Card Última Atualização */}
-        <div style={{
-          padding: 16,
-          background: 'rgba(59, 130, 246, 0.1)',
-          border: '1px solid rgba(59, 130, 246, 0.2)',
-          borderRadius: 12
-        }}>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Última Atualização</div>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>
-            {ultimaAtualizacao ? ultimaAtualizacao.toLocaleTimeString('pt-BR') : '—'}
-          </div>
-        </div>
-
-        {/* Card Versão */}
-        <div style={{
-          padding: 16,
-          background: 'rgba(168, 85, 247, 0.1)',
-          border: '1px solid rgba(168, 85, 247, 0.2)',
-          borderRadius: 12
-        }}>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Versão</div>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>RED v5.0</div>
-        </div>
+        {[
+          { id: 'dashboard', label: '📊 Dashboard'},
+          { id: 'admins', label: '👥 Administradores'},
+          { id: 'tenants', label: '🏢 Empresas'},
+          { id: 'logs', label: '📋 Logs'},
+        ].map(aba => (
+          <button
+            key={aba.id}
+            onClick={() => setAbas(aba.id)}
+            style={{
+              padding: '8px 16px',
+              background: abas === aba.id ? 'rgba(220,20,30,0.2)' : 'transparent',
+              border: abas === aba.id ? '1px solid rgba(220,20,30,0.4)' : '1px solid transparent',
+              borderRadius: 8,
+              color: abas === aba.id ? '#dc141e' : 'rgba(255,255,255,0.5)',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 600,
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {aba.label}
+          </button>
+        ))}
       </div>
 
-      {/* Métricas Principais */}
-      {stats && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: 16,
-          marginBottom: 32
-        }}>
-          <MetricCard
-            icon={<Users size={20} />}
-            label="Empresas Ativas"
-            valor={stats.total_tenants_ativos}
-            cor="#3b82f6"
-          />
-          <MetricCard
-            icon={<TrendingUp size={20} />}
-            label="Usuários Ativos"
-            valor={stats.total_usuarios_ativos}
-            cor="#10b981"
-          />
-          <MetricCard
-            icon={<Activity size={20} />}
-            label="Logs (24h)"
-            valor={stats.logs_24h}
-            cor="#f59e0b"
-          />
-          <MetricCard
-            icon={<AlertCircle size={20} />}
-            label="Erros (24h)"
-            valor={stats.erros_24h}
-            cor="#ef4444"
-          />
+      {/* DASHBOARD */}
+      {abas === 'dashboard' && stats && (
+        <div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 16,
+            marginBottom: 32
+          }}>
+            <MetricCard label="Empresas" valor={stats.total_tenants_ativos} cor="#3b82f6" icon="🏢" />
+            <MetricCard label="Administradores" valor={stats.total_usuarios_ativos} cor="#10b981" icon="👥" />
+            <MetricCard label="Logs" valor={stats.logs_24h} cor="#f59e0b" icon="📋" />
+            <MetricCard label="Atualizado" valor={ultimaAtualizacao?.toLocaleTimeString('pt-BR') || '—'} cor="#a855f7" icon="🕒" />
+          </div>
+
+          <div style={{
+            padding: 16,
+            background: 'rgba(34, 197, 94, 0.1)',
+            border: '1px solid rgba(34, 197, 94, 0.2)',
+            borderRadius: 12,
+            marginBottom: 32
+          }}>
+            <CheckCircle size={24} color='#22c55e' style={{ marginBottom: 8 }} />
+            <div style={{ fontWeight: 700, fontSize: 16 }}>✅ Sistema Online</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>
+              Todos os serviços operacionais
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Health Check dos Serviços */}
-      <div style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Server size={20} /> Saúde dos Serviços
-        </h2>
-
-        <div style={{
-          display: 'grid',
-          gap: 12
-        }}>
-          {servicos.map((srv) => (
-            <div
-              key={srv.nome}
-              style={{
-                padding: 16,
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: 12,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {srv.status === 'online' ? (
-                  <CheckCircle size={20} color='#22c55e' />
-                ) : (
-                  <AlertCircle size={20} color='#ef4444' />
-                )}
-                <div>
-                  <div style={{ fontWeight: 600 }}>{srv.nome}</div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{srv.url}</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {srv.latencia && (
-                  <div style={{
-                    padding: '4px 12px',
-                    background: srv.latencia > 100 ? 'rgba(251, 146, 60, 0.2)' : 'rgba(34, 197, 94, 0.2)',
-                    border: srv.latencia > 100 ? '1px solid rgba(251, 146, 60, 0.3)' : '1px solid rgba(34, 197, 94, 0.3)',
-                    borderRadius: 6,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6
-                  }}>
-                    <Clock size={12} />
-                    {srv.latencia}ms
-                  </div>
-                )}
-                <div style={{
-                  padding: '4px 12px',
-                  background: srv.status === 'online' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                  border: srv.status === 'online' ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
-                  borderRadius: 6,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.5,
-                  color: srv.status === 'online' ? '#22c55e' : '#ef4444'
-                }}>
-                  {srv.status === 'online' ? '● Online' : '● Offline'}
-                </div>
-              </div>
+      {/* ADMINS */}
+      {abas === 'admins' && (
+        <div>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>👥 Administradores ({admins.length})</h2>
+          {admins.length === 0 ? (
+            <div style={{
+              padding: 32,
+              textAlign: 'center',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px dashed rgba(255,255,255,0.1)',
+              borderRadius: 12,
+              color: 'rgba(255,255,255,0.5)'
+            }}>
+              Nenhum admin
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Logs Recentes */}
-      <div>
-        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <BarChart3 size={20} /> Logs Recentes
-        </h2>
-
-        <div style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: 12,
-          overflow: 'hidden'
-        }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>Ação</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>Administrador</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>Status</th>
-                <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>Horário</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((log, idx) => (
-                <tr
-                  key={log.id}
+          ) : (
+            <div style={{ display: 'grid', gap: 12 }}>
+              {admins.map((adm) => (
+                <div
+                  key={adm.id}
                   style={{
-                    borderBottom: idx < logs.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
-                    transition: 'background 0.2s'
+                    padding: 16,
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    borderRadius: 12,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
-                  <td style={{ padding: '12px 16px', fontSize: 13 }}><code style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: 4 }}>{log.acao}</code></td>
-                  <td style={{ padding: '12px 16px', fontSize: 13 }}>{log.admin}</td>
-                  <td style={{ padding: '12px 16px', fontSize: 13 }}>
-                    <span style={{
-                      padding: '2px 8px',
-                      borderRadius: 4,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      background: log.status === 'sucesso' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                      color: log.status === 'sucesso' ? '#22c55e' : '#ef4444'
-                    }}>
-                      {log.status === 'sucesso' ? '✓' : '✕'} {log.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px 16px', fontSize: 13, textAlign: 'right', color: 'rgba(255,255,255,0.5)' }}>
-                    {log.timestamp.toLocaleTimeString('pt-BR')}
-                  </td>
-                </tr>
+                  <div>
+                    <div style={{ fontWeight: 700 }}>{adm.nome}</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>@{adm.username}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={() => desativarAdmin(adm.id)}
+                      style={{
+                        padding: '6px 12px',
+                        background: 'rgba(220,20,30,0.2)',
+                        border: '1px solid rgba(220,20,30,0.3)',
+                        borderRadius: 6,
+                        color: '#dc141e',
+                        cursor: 'pointer',
+                        fontSize: 11,
+                      }}
+                    >
+                      🗑️ Desativar
+                    </button>
+                    <button
+                      onClick={() => deletarAdmin(adm.id)}
+                      style={{
+                        padding: '6px 12px',
+                        background: 'rgba(220,20,30,0.2)',
+                        border: '1px solid rgba(220,20,30,0.3)',
+                        borderRadius: 6,
+                        color: '#dc141e',
+                        cursor: 'pointer',
+                        fontSize: 11,
+                      }}
+                    >
+                      ❌ Deletar
+                    </button>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
-      </div>
+      )}
+
+      {/* TENANTS */}
+      {abas === 'tenants' && (
+        <div>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>🏢 Empresas ({tenants.length})</h2>
+          {tenants.length === 0 ? (
+            <div style={{
+              padding: 32,
+              textAlign: 'center',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px dashed rgba(255,255,255,0.1)',
+              borderRadius: 12,
+              color: 'rgba(255,255,255,0.5)'
+            }}>
+              Nenhuma empresa
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: 12
+            }}>
+              {tenants.map((tenant) => (
+                <div
+                  key={tenant.id}
+                  style={{
+                    padding: 16,
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    borderRadius: 12
+                  }}
+                >
+                  <div style={{ fontWeight: 700, marginBottom: 8 }}>{tenant.nome || tenant.id}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>
+                    Tipo: <strong>{tenant.tipo}</strong>
+                  </div>
+                  <button
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: 6,
+                      color: '#3b82f6',
+                      cursor: 'pointer',
+                      fontSize: 11,
+                    }}
+                  >
+                    👁️ Ver
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* LOGS */}
+      {abas === 'logs' && (
+        <div>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>📋 Logs ({logs.length})</h2>
+          {logs.length === 0 ? (
+            <div style={{
+              padding: 32,
+              textAlign: 'center',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px dashed rgba(255,255,255,0.1)',
+              borderRadius: 12,
+              color: 'rgba(255,255,255,0.5)'
+            }}>
+              Nenhum log
+            </div>
+          ) : (
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 12,
+              overflow: 'hidden'
+            }}>
+              <table style={{ width: '100%' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>Ação</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', display: 'none' }}>Usuário</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.slice(0, 20).map((log, idx) => (
+                    <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 12 }}>{log.acao}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 12, display: 'none' }}>{log.usuario}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 12, textAlign: 'right', color: 'rgba(255,255,255,0.5)' }}>
+                        {new Date(log.timestamp).toLocaleString('pt-BR')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
     </div>
   )
 }
 
-function MetricCard({ icon, label, valor, cor }) {
+function MetricCard({ label, valor, cor, icon }) {
   return (
     <div style={{
-      padding: 20,
-      background: `rgba(${cor.slice(1).match(/.{2}/g).map(x => parseInt(x, 16)).join(', ')}, 0.1)`,
-      border: `1px solid rgba(${cor.slice(1).match(/.{2}/g).map(x => parseInt(x, 16)).join(', ')}, 0.2)`,
+      padding: 16,
+      background: `rgba(${parseInt(cor.slice(1,3), 16)},${parseInt(cor.slice(3,5), 16)},${parseInt(cor.slice(5,7), 16)},0.1)`,
+      border: `1px solid rgba(${parseInt(cor.slice(1,3), 16)},${parseInt(cor.slice(3,5), 16)},${parseInt(cor.slice(5,7), 16)},0.2)`,
       borderRadius: 12,
       textAlign: 'center'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8, opacity: 0.7 }}>
-        {icon}
-      </div>
-      <div style={{ fontSize: 32, fontWeight: 700, lineHeight: 1, marginBottom: 8 }}>
-        {valor}
-      </div>
-      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
-        {label}
-      </div>
+      <div style={{ fontSize: 24, marginBottom: 8 }}>{icon}</div>
+      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 700 }}>{valor}</div>
     </div>
   )
 }

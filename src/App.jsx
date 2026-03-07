@@ -1,15 +1,20 @@
-import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useCallback } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import useAuthStore from './store/authStore'
 import useThemeStore from './store/themeStore'
+import useErrorStore from './store/errorStore'
+import { onAuthError } from './services/api'
 
+import ErrorModal from './components/ui/ErrorModal'
 import Layout         from './components/layout/Layout'
+import AdminPrivateRoute from './components/AdminPrivateRoute'
 import Login          from './pages/auth/Login'
 import Register       from './pages/auth/Register'
 import AdminLogin     from './pages/admin/AdminLogin'
 import AdminRegister  from './pages/admin/AdminRegister'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminManagement from './pages/admin/AdminManagement'
 import Dashboard      from './pages/Dashboard'
 import Vehicles       from './pages/vehicles/Vehicles'
 import Clients        from './pages/clients/Clients'
@@ -45,13 +50,66 @@ function PublicRoute({ children }) {
   return token ? <Navigate to="/" replace /> : children
 }
 
+function LogoutMonitor() {
+  const navigate = useNavigate()
+  
+  useEffect(() => {
+    const checkLogout = () => {
+      if (localStorage.getItem('force_logout') === 'true') {
+        localStorage.removeItem('force_logout')
+        navigate('/login', { replace: true })
+      }
+    }
+
+    checkLogout()
+    const interval = setInterval(checkLogout, 500)
+    return () => clearInterval(interval)
+  }, [navigate])
+
+  return null
+}
+
+function ErrorHandler() {
+  const error = useErrorStore(s => s.error)
+  const isVisible = useErrorStore(s => s.isVisible)
+  const clearError = useErrorStore(s => s.clearError)
+  const navigate = useNavigate()
+
+  const handleAction = () => {
+    if (error?.type === 'logout') {
+      navigate('/login', { replace: true })
+    } else if (error?.type === 'auth_error' || error?.type === 'forbidden') {
+      navigate('/login', { replace: true })
+    }
+    clearError()
+  }
+
+  return (
+    <ErrorModal
+      error={isVisible ? error : null}
+      onClose={clearError}
+      onAction={error?.type === 'logout' || error?.type === 'auth_error' ? handleAction : null}
+      action={error?.type === 'logout' ? 'login' : 'retry'}
+    />
+  )
+}
+
 export default function App() {
   const tenant = useAuthStore(s => s.tenant)
   const init   = useThemeStore(s => s.init)
+  const showError = useErrorStore(s => s.showError)
 
   useEffect(() => {
     init(tenant?.id)
-  }, [tenant?.id, init])
+  }, [tenant?.id])
+
+  // Configura os listeners de erro da API
+  useEffect(() => {
+    const unsubscribe = onAuthError((error) => {
+      showError(error, true)
+    })
+    return unsubscribe
+  }, [showError])
 
   return (
     <BrowserRouter>
@@ -67,11 +125,16 @@ export default function App() {
           error:   { iconTheme: { primary: 'var(--red)',   secondary: 'var(--bg3)' } },
         }}
       />
+      <LogoutMonitor />
+      <ErrorHandler />
       <Routes>
         <Route path="/login"    element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/admin/login"    element={<AdminLogin />} />
-        <Route path="/admin/register" element={<AdminRegister />} />        <Route path="/admin/dashboard" element={<AdminDashboard />} />        <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+        <Route path="/admin/register" element={<AdminRegister />} />
+        <Route path="/admin/dashboard" element={<AdminPrivateRoute><AdminDashboard /></AdminPrivateRoute>} />
+        <Route path="/admin/management" element={<AdminPrivateRoute><AdminManagement /></AdminPrivateRoute>} />
+        <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index               element={<Dashboard />} />
           <Route path="vehicles"     element={<Vehicles />} />
           <Route path="clients"      element={<Clients />} />

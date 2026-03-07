@@ -105,7 +105,7 @@ export default function DeployControl() {
                 disabled={loading[action]}
                 style={{
                   display:'flex', alignItems:'center', justifyContent:'center', gap:7,
-                  width:'100%', padding:'9px', borderRadius:8, border:'none',
+                  width:'100%', padding:'9px', borderRadius:8,
                   background: danger ? 'rgba(232,25,44,0.1)' : 'var(--bg3)',
                   border: `1px solid ${danger ? 'var(--red-border)' : 'var(--border)'}`,
                   color: danger ? 'var(--red)' : 'var(--dim)',

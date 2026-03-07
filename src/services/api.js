@@ -1,21 +1,42 @@
 import axios from 'axios'
 import logger from './frontendLogger'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:7860'
+console.log('[API] Base URL:', API_URL)
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:7860',
+  baseURL: API_URL,
   timeout: 15000,
 })
 
-// Injeta token em toda requisição
+// Log detalhado de requisições
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
+  console.log(`[API] ${config.method.toUpperCase()} ${config.baseURL}${config.url}`)
   return config
 })
 
 // Controle para evitar múltiplos refreshes simultâneos
 let isRefreshing = false
 let failedQueue  = []
+
+// Sistema de eventos para tratamento centralizado de erros
+const errorListeners = new Set()
+export const onAuthError = (callback) => {
+  errorListeners.add(callback)
+  return () => errorListeners.delete(callback)
+}
+
+function notifyAuthError(error) {
+  errorListeners.forEach(listener => {
+    try {
+      listener(error)
+    } catch (e) {
+      console.error('Erro ao notificar listeners de auth:', e)
+    }
+  })
+}
 
 function processQueue(error, token = null) {
   failedQueue.forEach(({ resolve, reject }) => {
@@ -25,7 +46,7 @@ function processQueue(error, token = null) {
   failedQueue = []
 }
 
-function forceLogout() {
+function forceLogout(reason = 'Token inválido ou expirado') {
   // Preserva chaves permanentes do superadmin
   const PERSIST_KEYS = [
     'ai_provider_keys',
@@ -40,67 +61,139 @@ function forceLogout() {
   })
   localStorage.clear()
   Object.entries(saved).forEach(([k, v]) => localStorage.setItem(k, v))
-  window.location.href = '/login'
+  
+  // Notifica os listeners sobre o logout
+  notifyAuthError({
+    type: 'logout',
+    message: reason,
+    status: 401
+  })
+  
+  // Sinaliza logout sem fazer reload de página
+  localStorage.setItem('force_logout', 'true')
 }
 
-// Interceptor de resposta: tenta refresh antes de deslogar
+// Interceptor de resposta: trata erros com feedback
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
     const originalRequest = err.config
+    const status = err.response?.status
 
-    // Só age em 401, e só uma vez por requisição (evita loop infinito)
-    if (err.response?.status !== 401 || originalRequest._retry) {
-      return Promise.reject(err)
-    }
+    // ─────────────────── ERROS DE AUTENTICAÇÃO ───────────────────
+    if (status === 401 && !originalRequest._retry) {
+      // Se é o próprio refresh que falhou
+      if (originalRequest.url?.includes('/api/auth/refresh')) {
+        forceLogout('Sua sessão expirou. Por favor, faça login novamente.')
+        return Promise.reject(err)
+      }
 
-    // Se o próprio refresh falhou → desloga
-    if (originalRequest.url?.includes('/api/auth/refresh')) {
-      forceLogout()
-      return Promise.reject(err)
-    }
+      // Se já está fazendo refresh, coloca na fila
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`
+          return api(originalRequest)
+        }).catch(e => {
+          notifyAuthError({
+            type: 'auth_error',
+            message: 'Falha ao renovar sessão',
+            status: 401,
+            original: e
+          })
+          return Promise.reject(e)
+        })
+      }
 
-    // Se já está fazendo refresh, coloca na fila
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject })
-      }).then(token => {
-        originalRequest.headers.Authorization = `Bearer ${token}`
+      // Inicia o refresh
+      originalRequest._retry = true
+      isRefreshing = true
+
+      const refreshToken = localStorage.getItem('refresh_token')
+      if (!refreshToken) {
+        forceLogout('Token de sessão expirado.')
+        return Promise.reject(err)
+      }
+
+      try {
+        const { data } = await api.post('/api/auth/refresh', { refresh_token: refreshToken })
+        const newToken    = data.data?.access_token
+        const newRefresh  = data.data?.refresh_token
+
+        if (!newToken) {
+          forceLogout('Resposta de refresh inválida.')
+          return Promise.reject(err)
+        }
+
+        localStorage.setItem('access_token', newToken)
+        if (newRefresh) localStorage.setItem('refresh_token', newRefresh)
+        api.defaults.headers.common.Authorization = `Bearer ${newToken}`
+
+        processQueue(null, newToken)
+
+        // Retenta a requisição original com o novo token
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
         return api(originalRequest)
-      }).catch(e => Promise.reject(e))
+      } catch (refreshErr) {
+        processQueue(refreshErr, null)
+        forceLogout('Não foi possível renovar sua sessão.')
+        return Promise.reject(refreshErr)
+      } finally {
+        isRefreshing = false
+      }
     }
 
-    // Inicia o refresh
-    originalRequest._retry = true
-    isRefreshing = true
-
-    const refreshToken = localStorage.getItem('refresh_token')
-    if (!refreshToken) {
-      forceLogout()
+    // ─────────────────── ERROS DE AUTORIZAÇÃO ───────────────────
+    if (status === 403) {
+      notifyAuthError({
+        type: 'forbidden',
+        message: 'Você não tem permissão para acessar este recurso.',
+        status: 403
+      })
       return Promise.reject(err)
     }
 
-    try {
-      const { data } = await api.post('/api/auth/refresh', { refresh_token: refreshToken })
-      const newToken    = data.data.access_token
-      const newRefresh  = data.data.refresh_token
-
-      localStorage.setItem('access_token', newToken)
-      if (newRefresh) localStorage.setItem('refresh_token', newRefresh)
-      api.defaults.headers.common.Authorization = `Bearer ${newToken}`
-
-      processQueue(null, newToken)
-
-      // Retenta a requisição original com o novo token
-      originalRequest.headers.Authorization = `Bearer ${newToken}`
-      return api(originalRequest)
-    } catch (refreshErr) {
-      processQueue(refreshErr, null)
-      forceLogout()
-      return Promise.reject(refreshErr)
-    } finally {
-      isRefreshing = false
+    // ─────────────────── ERROS DO SERVIDOR ───────────────────
+    if (status >= 500) {
+      notifyAuthError({
+        type: 'server_error',
+        message: `Erro do servidor: ${err.response?.statusText || 'Erro desconhecido'}`,
+        status: status,
+        details: err.response?.data?.error
+      })
+      return Promise.reject(err)
     }
+
+    // ─────────────────── ERROS DE REDE/TIMEOUT ───────────────────
+    if (err.code === 'ECONNABORTED' || err.message === 'timeout of ' + api.defaults.timeout + 'ms exceeded') {
+      notifyAuthError({
+        type: 'timeout',
+        message: 'Tempo limite de conexão excedido. Verifique sua internet.',
+        timeout: api.defaults.timeout,
+        code: 'TIMEOUT'
+      })
+      return Promise.reject(err)
+    }
+
+    if (err.message?.includes('Network') || err.code === 'ERR_NETWORK') {
+      notifyAuthError({
+        type: 'network',
+        message: 'Erro de conexão. Verifique sua internet ou tente novamente.',
+        code: 'NETWORK_ERROR'
+      })
+      return Promise.reject(err)
+    }
+
+    // ─────────────────── OUTROS ERROS ───────────────────
+    // Erros da aplicação (4xx que não 401/403)
+    if (status >= 400 && status < 500) {
+      // Deixa a aplicação tratar (ex: 422 de validação)
+      return Promise.reject(err)
+    }
+
+    // Erros desconhecidos
+    return Promise.reject(err)
   }
 )
 
@@ -160,3 +253,4 @@ api.interceptors.response.use(
 )
 
 export default api
+
