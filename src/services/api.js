@@ -1,5 +1,6 @@
 import axios from 'axios'
 import logger from './frontendLogger'
+import supabase from './supabaseClient'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:7860'
 console.log('[API] Base URL:', API_URL)
@@ -47,6 +48,9 @@ function processQueue(error, token = null) {
 }
 
 function forceLogout(reason = 'Token inválido ou expirado') {
+  // Encerra sessão no Supabase (fire-and-forget)
+  supabase.auth.signOut().catch(() => {})
+
   // Preserva chaves permanentes do superadmin
   const PERSIST_KEYS = [
     'ai_provider_keys',
@@ -82,7 +86,7 @@ api.interceptors.response.use(
 
     // ─────────────────── ERROS DE AUTENTICAÇÃO ───────────────────
     if (status === 401 && !originalRequest._retry) {
-      // Se é o próprio refresh que falhou
+      // Se é um refresh do Supabase que falhou (não deve acontecer, mas por segurança)
       if (originalRequest.url?.includes('/api/auth/refresh')) {
         forceLogout('Sua sessão expirou. Por favor, faça login novamente.')
         return Promise.reject(err)
@@ -106,25 +110,22 @@ api.interceptors.response.use(
         })
       }
 
-      // Inicia o refresh
+      // Inicia o refresh via Supabase
       originalRequest._retry = true
       isRefreshing = true
 
-      const refreshToken = localStorage.getItem('refresh_token')
-      if (!refreshToken) {
-        forceLogout('Token de sessão expirado.')
-        return Promise.reject(err)
-      }
-
       try {
-        const { data } = await api.post('/api/auth/refresh', { refresh_token: refreshToken })
-        const newToken    = data.data?.access_token
-        const newRefresh  = data.data?.refresh_token
+        // Usa o Supabase para renovar a sessão (substitui a chamada ao backend /api/auth/refresh)
+        const { data: sessionData, error: refreshError } = await supabase.auth.refreshSession()
 
-        if (!newToken) {
-          forceLogout('Resposta de refresh inválida.')
+        if (refreshError || !sessionData?.session?.access_token) {
+          processQueue(refreshError || new Error('Refresh inválido'), null)
+          forceLogout('Token de sessão expirado.')
           return Promise.reject(err)
         }
+
+        const newToken   = sessionData.session.access_token
+        const newRefresh = sessionData.session.refresh_token
 
         localStorage.setItem('access_token', newToken)
         if (newRefresh) localStorage.setItem('refresh_token', newRefresh)
