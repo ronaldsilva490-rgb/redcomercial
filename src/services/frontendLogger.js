@@ -69,24 +69,29 @@ class FrontendLogger {
   async flush() {
     if (this.queue.length === 0) return
 
+    // Só tenta enviar se houver token de auth (usuário logado)
+    if (!localStorage.getItem('access_token')) {
+      this.queue = [] // descarta logs de sessões não autenticadas
+      return
+    }
+
     const toSend = [...this.queue]
     this.queue = []
 
     try {
-      // Tenta enviar batch
       const response = await api.post('/api/superadmin/logs/batch', toSend, {
         timeout: 5000,
       })
       
       if (!response.data?.ok) {
-        console.warn('[Logger] Falha ao enviar batch:', response.data)
-        // Re-insere na fila se falhar
-        this.queue.unshift(...toSend)
+        // Silencioso — não repõe na fila para não criar loop
       }
     } catch (error) {
-      console.warn('[Logger] Erro ao enviar logs:', error.message)
-      // Re-insere na fila se falhar
-      this.queue.unshift(...toSend.slice(0, this.MAX_QUEUE / 2))
+      const status = error.response?.status
+      // 401/403 = sem permissão (usuário normal, não superadmin) — descarta silenciosamente
+      if (status === 401 || status === 403) return
+      // Outros erros: recoloca metade na fila para tentar depois
+      this.queue.unshift(...toSend.slice(0, Math.floor(this.MAX_QUEUE / 2)))
     }
   }
 
