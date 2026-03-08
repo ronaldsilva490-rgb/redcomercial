@@ -736,7 +736,7 @@ export default function AdminDashboard() {
         )}
 
         <div style={{ marginTop: 32, textAlign: 'center', fontSize: 10, color: 'rgba(255,255,255,0.15)', letterSpacing: 0.3 }}>
-          RED System Corporation™ © 2026. Todos os direitos reservados.
+          RED Systems Corporation™ © 2026. Todos os direitos reservados.
         </div>
       </div>
 
