@@ -16,7 +16,8 @@
     "zustand": "^4.5.4",
     "react-hot-toast": "^2.4.1",
     "lucide-react": "^0.427.0",
-    "date-fns": "^3.6.0"
+    "date-fns": "^3.6.0",
+    "@supabase/supabase-js": "^2.35.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

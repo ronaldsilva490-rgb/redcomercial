@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, ArrowRight, Lock, Settings } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../../services/api'
+import supabase from '../../services/supabaseClient'
 import LOGO from '../../assets/logo.png'
 
 export default function Login() {
@@ -25,7 +26,29 @@ export default function Login() {
 
     setCarregando(true)
     try {
-      console.log('【LOGIN】 Tentando login com email:', email)
+      console.log('【LOGIN】 Tentando login com email (supabase):', email)
+      // Primeiro tenta autenticar diretamente via Supabase JS (cliente)
+      try {
+        const { data: sbData, error: sbError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: senha
+        })
+        if (sbError) {
+          console.debug('Supabase client login failed, falling back to backend:', sbError.message)
+        } else {
+          console.debug('Supabase client login success:', sbData)
+          // salva tokens do supabase localmente — o backend também validará quando necessário
+          if (sbData?.session?.access_token) localStorage.setItem('access_token', sbData.session.access_token)
+          if (sbData?.session?.refresh_token) localStorage.setItem('refresh_token', sbData.session.refresh_token)
+          if (sbData?.user) localStorage.setItem('user', JSON.stringify({ id: sbData.user.id, email: sbData.user.email }))
+        }
+
+      } catch (sbEx) {
+        console.debug('Supabase client threw error:', sbEx)
+      }
+
+      // Em seguida, chama o backend para obter tenant/papel e o payload padrão do sistema
+      console.log('【LOGIN】 Calling backend for tenant and papel:', email)
       const { data } = await api.post('/api/auth/login', {
         email: email.trim(),
         password: senha
