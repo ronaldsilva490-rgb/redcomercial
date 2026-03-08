@@ -154,12 +154,16 @@ api.interceptors.response.use(
 
     // ─────────────────── ERROS DO SERVIDOR ───────────────────
     if (status >= 500) {
-      notifyAuthError({
-        type: 'server_error',
-        message: `Erro do servidor: ${err.response?.statusText || 'Erro desconhecido'}`,
-        status: status,
-        details: err.response?.data?.error
-      })
+      // Rotas do painel admin usam token separado — não exibe modal global
+      const url = originalRequest.url || ''
+      if (!url.includes('/api/auth/admin') && !url.includes('/api/superadmin')) {
+        notifyAuthError({
+          type: 'server_error',
+          message: `Erro do servidor: ${err.response?.statusText || 'Erro desconhecido'}`,
+          status: status,
+          details: err.response?.data?.error
+        })
+      }
       return Promise.reject(err)
     }
 

@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, ArrowRight, Lock, User } from 'lucide-react'
 import toast from 'react-hot-toast'
-import api from '../../services/api'
+import useAdminStore from '../../store/adminStore'
 import LOGO from '../../assets/logo.png'
 
 export default function AdminLogin() {
   const navigate = useNavigate()
+  const adminLogin = useAdminStore(s => s.login)
   const [login, setLogin] = useState('')
   const [senha, setSenha] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
@@ -24,25 +25,15 @@ export default function AdminLogin() {
     }
 
     setCarregando(true)
-    try {
-      const { data } = await api.post('/api/auth/admin/login', {
-        login: login.trim(),
-        senha: senha
-      })
+    // Usa o store — ele salva no localStorage E atualiza o Zustand state
+    const result = await adminLogin(login.trim(), senha)
+    setCarregando(false)
 
-      if (data.data) {
-        localStorage.setItem('admin_token', data.data.access_token)
-        localStorage.setItem('admin_user', JSON.stringify(data.data.admin))
-        toast.success('Bem-vindo, Admin!')
-        setTimeout(() => {
-          navigate('/admin/dashboard', { replace: true })
-        }, 100)
-      }
-    } catch (err) {
-      const msg = err.response?.data?.error || 'Erro ao fazer login'
-      toast.error(msg)
-    } finally {
-      setCarregando(false)
+    if (result.ok) {
+      toast.success('Bem-vindo, Admin!')
+      navigate('/admin/dashboard', { replace: true })
+    } else {
+      toast.error(result.error || 'Erro ao fazer login')
     }
   }
 
