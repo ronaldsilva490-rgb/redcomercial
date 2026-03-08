@@ -76,9 +76,7 @@ function ErrorHandler() {
   const navigate = useNavigate()
 
   const handleAction = () => {
-    if (error?.type === 'logout') {
-      navigate('/login', { replace: true })
-    } else if (error?.type === 'auth_error' || error?.type === 'forbidden') {
+    if (error?.type === 'logout' || error?.type === 'auth_error') {
       navigate('/login', { replace: true })
     }
     clearError()

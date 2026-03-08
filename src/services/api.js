@@ -145,12 +145,10 @@ api.interceptors.response.use(
     }
 
     // ─────────────────── ERROS DE AUTORIZAÇÃO ───────────────────
+    // 403 em rotas de dados é permissão insuficiente — NÃO é erro de sessão.
+    // Cada componente trata silenciosamente (exibe estado vazio, etc).
+    // Não exibe modal global para não assustar o usuário.
     if (status === 403) {
-      notifyAuthError({
-        type: 'forbidden',
-        message: 'Você não tem permissão para acessar este recurso.',
-        status: 403
-      })
       return Promise.reject(err)
     }
 
