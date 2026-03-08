@@ -105,8 +105,9 @@ export default function App() {
 
   // Configura os listeners de erro da API
   useEffect(() => {
-    const location = window.location?.pathname || ''
     const unsubscribe = onAuthError((error) => {
+      // Obtém a rota atual no momento do erro (suporta navegação SPA)
+      const location = window.location?.pathname || ''
       // Evita mostrar modal de sessão expirada em rotas públicas de autenticação
       const publicPaths = ['/login', '/register', '/admin/login', '/admin/register']
       if (publicPaths.some(p => location.startsWith(p))) {

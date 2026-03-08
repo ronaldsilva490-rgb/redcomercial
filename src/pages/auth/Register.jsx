@@ -92,11 +92,20 @@ export default function Register() {
       console.log('【REGISTER】 Iniciando registro com email:', form.email)
       
       // 1. Registra o novo usuário
-      await api.post('/api/auth/register', {
+      const payload = {
         email: form.email,
         password: form.password,
-        tenant: { nome: form.nome, tipo, cnpj: form.cnpj, telefone: form.telefone, cidade: form.cidade, estado: form.estado },
-      })
+        tenant: {
+          nome: form.nome,
+          tipo: String(tipo || ''),
+          cnpj: form.cnpj,
+          telefone: form.telefone,
+          cidade: form.cidade,
+          estado: form.estado,
+        }
+      }
+      console.log('【REGISTER】 Payload:', payload)
+      await api.post('/api/auth/register', payload)
       console.log('【REGISTER】 ✓ Usuário criado com sucesso')
       
       // 2. Faz login automaticamente
