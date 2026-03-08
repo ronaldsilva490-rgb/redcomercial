@@ -70,6 +70,8 @@ export default function AdminDashboard() {
   const [logs,              setLogs]              = useState([])
   const [logTotal,          setLogTotal]          = useState(0)
   const [logFiltro,         setLogFiltro]         = useState({ nivel: '', servico: '', busca: '' })
+  const [networkInfo,       setNetworkInfo]       = useState(null)
+  const [networkLoading,    setNetworkLoading]    = useState(false)
 
   useEffect(() => {
     const token     = localStorage.getItem('admin_token')
@@ -126,6 +128,22 @@ export default function AdminDashboard() {
   }, [logFiltro])
 
   useEffect(() => { if (aba === 'logs') carregarLogs() }, [logFiltro, aba, carregarLogs])
+
+  const fetchNetworkInfo = useCallback(async () => {
+    setNetworkLoading(true)
+    try {
+      const res = await api.get('/api/admin/network-info', { headers: authHeader() })
+      setNetworkInfo(res.data?.data || null)
+    } catch {
+      setNetworkInfo(null)
+    } finally {
+      setNetworkLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (aba === 'status' && !networkInfo) fetchNetworkInfo()
+  }, [aba, networkInfo, fetchNetworkInfo])
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token')
@@ -265,6 +283,102 @@ export default function AdminDashboard() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 14 }}>
                   {Object.entries(systemStatus).map(([id, info]) => <ServiceCard key={id} id={id} info={info} />)}
+                </div>
+
+                {/* ── Network / IP Info ── */}
+                <div style={{ marginTop: 28 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>🌐 Informações de Rede</div>
+                    <button
+                      onClick={fetchNetworkInfo}
+                      disabled={networkLoading}
+                      style={{ padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 11 }}
+                    >
+                      <RefreshCw size={11} style={{ animation: networkLoading ? 'spin 1s linear infinite' : 'none' }} />
+                      Atualizar
+                    </button>
+                  </div>
+
+                  {networkLoading && !networkInfo ? (
+                    <div style={{ padding: 30, textAlign: 'center', color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>
+                      Coletando informações de rede...
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
+                      {[
+                        { key: 'client',   label: 'Você (Admin)',      icon: '👤', color: '#10b981', rgb: '16,185,129' },
+                        { key: 'backend',  label: 'Backend (Fly.io)',  icon: '🖥️', color: '#3b82f6', rgb: '59,130,246' },
+                        { key: 'frontend', label: 'Frontend (Vercel)', icon: '🌐', color: '#a855f7', rgb: '168,85,247'  },
+                      ].map(({ key, label, icon, color, rgb }) => {
+                        const info = networkInfo?.[key]
+                        const geo  = info?.geo
+                        const flag = geo?.country_code
+                          ? `https://flagcdn.com/20x15/${geo.country_code.toLowerCase()}.png`
+                          : null
+                        return (
+                          <div key={key} style={{
+                            padding: 18,
+                            background: `rgba(${rgb},0.06)`,
+                            border: `1px solid rgba(${rgb},0.18)`,
+                            borderRadius: 14,
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                              <span style={{ fontSize: 18 }}>{icon}</span>
+                              <span style={{ fontWeight: 700, fontSize: 13 }}>{label}</span>
+                              {flag && <img src={flag} alt={geo.country_code} style={{ marginLeft: 'auto', borderRadius: 2 }} />}
+                            </div>
+
+                            {info?.error ? (
+                              <div style={{ fontSize: 11, color: '#ef4444' }}>⚠ {info.error}</div>
+                            ) : !info ? (
+                              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Aguardando...</div>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', width: 70, flexShrink: 0 }}>IP WAN</span>
+                                  <code style={{
+                                    fontSize: 13, fontWeight: 700, color,
+                                    background: `rgba(${rgb},0.12)`,
+                                    padding: '2px 8px', borderRadius: 5, letterSpacing: '0.04em'
+                                  }}>
+                                    {info.ip || '—'}
+                                  </code>
+                                </div>
+                                {geo && <>
+                                  <div style={{ display: 'flex', gap: 8 }}>
+                                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', width: 70, flexShrink: 0 }}>Local</span>
+                                    <span style={{ fontSize: 12 }}>
+                                      📍 {[geo.city, geo.region, geo.country].filter(Boolean).join(', ') || '—'}
+                                    </span>
+                                  </div>
+                                  {geo.org && (
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', width: 70, flexShrink: 0 }}>Provedor</span>
+                                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{geo.org}</span>
+                                    </div>
+                                  )}
+                                  {geo.timezone && (
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', width: 70, flexShrink: 0 }}>Timezone</span>
+                                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>🕐 {geo.timezone}</span>
+                                    </div>
+                                  )}
+                                  {geo.latitude && (
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', width: 70, flexShrink: 0 }}>Coords</span>
+                                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
+                                        {geo.latitude}, {geo.longitude}
+                                      </span>
+                                    </div>
+                                  )}
+                                </>}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               </>
             )}
