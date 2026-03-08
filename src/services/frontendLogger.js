@@ -75,6 +75,13 @@ class FrontendLogger {
       return
     }
 
+    // Logs batch só funcionam para superadmin — descarta silenciosamente para outros
+    const papel = localStorage.getItem('papel')
+    if (papel !== 'superadmin') {
+      this.queue = []
+      return
+    }
+
     const toSend = [...this.queue]
     this.queue = []
 
