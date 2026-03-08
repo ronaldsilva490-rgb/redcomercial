@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import useAuthStore from './store/authStore'
 import useThemeStore from './store/themeStore'
@@ -105,7 +105,15 @@ export default function App() {
 
   // Configura os listeners de erro da API
   useEffect(() => {
+    const location = window.location?.pathname || ''
     const unsubscribe = onAuthError((error) => {
+      // Evita mostrar modal de sessão expirada em rotas públicas de autenticação
+      const publicPaths = ['/login', '/register', '/admin/login', '/admin/register']
+      if (publicPaths.some(p => location.startsWith(p))) {
+        // Em páginas públicas, não interrompe o fluxo do usuário com modais de auth
+        console.debug('Auth error ignored on public path:', location, error)
+        return
+      }
       showError(error, true)
     })
     return unsubscribe
