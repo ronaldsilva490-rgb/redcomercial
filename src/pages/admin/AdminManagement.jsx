@@ -344,12 +344,38 @@ export default function AdminManagement() {
                 </tr>
               </thead>
               <tbody>
-                {admins.map((adm, idx) => (
+                {admins.map((adm) => {
+                  const isSelf = adm.id === admin?.id
+                  return (
                   <tr key={adm.id} style={{
                     borderBottom: '1px solid rgba(255,255,255,0.05)',
-                    background: idx % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent'
+                    background: isSelf
+                      ? 'rgba(220,20,30,0.08)'
+                      : 'transparent',
+                    outline: isSelf ? '1px solid rgba(220,20,30,0.25)' : 'none',
+                    borderRadius: isSelf ? 8 : 0,
+                    transition: 'background 0.2s'
                   }}>
-                    <td style={{ padding: '12px' }}>{adm.nome}</td>
+                    <td style={{ padding: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {adm.nome}
+                        {isSelf && (
+                          <span style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            background: 'rgba(220,20,30,0.25)',
+                            color: '#dc141e',
+                            border: '1px solid rgba(220,20,30,0.4)',
+                            borderRadius: 4,
+                            padding: '2px 6px',
+                            letterSpacing: '0.05em',
+                            textTransform: 'uppercase'
+                          }}>
+                            Você
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td style={{ padding: '12px', color: 'rgba(255,255,255,0.7)' }}>{adm.username}</td>
                     <td style={{ padding: '12px', color: 'rgba(255,255,255,0.7)' }}>{adm.email}</td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>
@@ -364,6 +390,15 @@ export default function AdminManagement() {
                       )}
                     </td>
                     <td style={{ padding: '12px', textAlign: 'right' }}>
+                      {isSelf ? (
+                        <span style={{
+                          fontSize: 11,
+                          color: 'rgba(255,255,255,0.3)',
+                          fontStyle: 'italic'
+                        }}>
+                          Sessão atual
+                        </span>
+                      ) : (
                       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                         {adm.ativo ? (
                           <button
@@ -426,9 +461,11 @@ export default function AdminManagement() {
                           <Trash2 size={14} />
                         </button>
                       </div>
+                      )}
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>
