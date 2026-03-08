@@ -114,8 +114,17 @@ export default function Register() {
         console.log('【REGISTER】 Criando tenant com payload:', payload)
         await api.post('/api/auth/register-tenant', payload)
       } else {
-        // Caso não receba token (confirm flow), solicita criação posterior
-        console.warn('【REGISTER】 Nenhum access token recebido no signup; tenant será criado após confirmação de email')
+        // Fallback: se o Supabase não retornar sessão (email confirm required),
+        // pede ao backend para criar o usuário + tenant via admin endpoint.
+        try {
+          console.warn('【REGISTER】 Nenhum access token recebido no signup; solicitando criação via backend')
+          await api.post('/api/auth/register', { email: form.email, password: form.password, tenant: { nome: form.nome, tipo: String(tipo || ''), cnpj: form.cnpj, telefone: form.telefone, cidade: form.cidade, estado: form.estado } })
+        } catch (e) {
+          console.error('【REGISTER】 Erro ao criar usuário+tenant via backend:', e)
+          toast.error('Erro ao criar conta via backend')
+          setLoading(false)
+          return
+        }
       }
 
       // 3. Faz login automático (se ainda não houver sessão válida)
