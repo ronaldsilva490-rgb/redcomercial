@@ -7,7 +7,11 @@ import LOGO from '../../assets/logo.png'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { login } = useAuthStore()
+  const { login, token } = useAuthStore()
+
+  useEffect(() => {
+    if (token) navigate('/', { replace: true })
+  }, [token])
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
@@ -28,7 +32,7 @@ export default function Login() {
       const result = await login(email.trim(), senha)
       if (result.ok) {
         toast.success('Bem-vindo!')
-        navigate('/', { replace: true })
+        // PublicRoute detecta o token no store e redireciona automaticamente
       } else {
         toast.error(result.error || 'Erro ao fazer login')
       }
