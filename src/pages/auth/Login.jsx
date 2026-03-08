@@ -28,27 +28,45 @@ export default function Login() {
     try {
       console.log('【LOGIN】 Tentando login com email (supabase):', email)
       // Primeiro tenta autenticar diretamente via Supabase JS (cliente)
+      // Tenta autenticar via Supabase client e usar token para obter tenant/papel
       try {
         const { data: sbData, error: sbError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password: senha
         })
-        if (sbError) {
-          console.debug('Supabase client login failed, falling back to backend:', sbError.message)
-        } else {
-          console.debug('Supabase client login success:', sbData)
-          // salva tokens do supabase localmente — o backend também validará quando necessário
-          if (sbData?.session?.access_token) localStorage.setItem('access_token', sbData.session.access_token)
-          if (sbData?.session?.refresh_token) localStorage.setItem('refresh_token', sbData.session.refresh_token)
-          if (sbData?.user) localStorage.setItem('user', JSON.stringify({ id: sbData.user.id, email: sbData.user.email }))
-        }
 
+        if (!sbError && sbData?.session?.access_token) {
+          console.debug('Supabase client login success:', sbData)
+          const at = sbData.session.access_token
+          const rt = sbData.session.refresh_token
+          localStorage.setItem('access_token', at)
+          if (rt) localStorage.setItem('refresh_token', rt)
+          if (sbData.user) localStorage.setItem('user', JSON.stringify({ id: sbData.user.id, email: sbData.user.email }))
+
+          // Busca tenant/papel no backend usando o access_token do Supabase
+          try {
+            const resp = await api.get('/api/tenants/me')
+            const tenant = resp.data?.data || null
+            const papel = resp.data?.data?.papel || resp.data?.data?.papel
+            if (tenant) localStorage.setItem('tenant', JSON.stringify(tenant))
+            if (resp.data?.data?.papel) localStorage.setItem('papel', resp.data.data.papel)
+
+            toast.success('Bem-vindo!')
+            setTimeout(() => navigate('/', { replace: true }), 100)
+            return
+          } catch (e) {
+            console.debug('Erro ao obter tenant via token, fallback para backend login', e)
+            // continua para fallback abaixo
+          }
+        } else {
+          console.debug('Supabase client login failed, falling back to backend:', sbError?.message)
+        }
       } catch (sbEx) {
         console.debug('Supabase client threw error:', sbEx)
       }
 
-      // Em seguida, chama o backend para obter tenant/papel e o payload padrão do sistema
-      console.log('【LOGIN】 Calling backend for tenant and papel:', email)
+      // Fallback: chama o backend tradicional com email+senha
+      console.log('【LOGIN】 Calling backend for tenant and papel (fallback):', email)
       const { data } = await api.post('/api/auth/login', {
         email: email.trim(),
         password: senha
