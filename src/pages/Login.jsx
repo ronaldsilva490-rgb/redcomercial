@@ -32,7 +32,7 @@ export default function Login() {
       const result = await login(email.trim(), senha)
       if (result.ok) {
         toast.success('Bem-vindo!')
-        // PublicRoute detecta o token no store e redireciona automaticamente
+        window.location.replace('/')
       } else {
         toast.error(result.error || 'Erro ao fazer login')
       }
