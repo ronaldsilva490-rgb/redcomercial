@@ -13,11 +13,7 @@ const api = axios.create({
 // Log detalhado de requisições
 api.interceptors.request.use((config) => {
   const url = config.url || ''
-  // Rotas de superadmin/admin usam token separado (admin_token), NÃO o token Supabase
-  const isAdminRoute = url.includes('/api/superadmin') || url.includes('/api/auth/admin')
-  const token = isAdminRoute
-    ? localStorage.getItem('admin_token')
-    : localStorage.getItem('access_token')
+  const token = localStorage.getItem('access_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   console.log(`[API] ${config.method.toUpperCase()} ${config.baseURL}${url}`)
   return config
@@ -91,16 +87,8 @@ api.interceptors.response.use(
 
     // ─────────────────── ERROS DE AUTENTICAÇÃO ───────────────────
     if (status === 401 && !originalRequest._retry) {
-      const reqUrl = originalRequest.url || ''
-
-      // Rotas de admin/superadmin usam token próprio — 401 aqui significa sessão admin
-      // expirada, não a sessão Supabase. Não tenta refresh e não exibe modal global.
-      if (reqUrl.includes('/api/superadmin') || reqUrl.includes('/api/auth/admin')) {
-        return Promise.reject(err)
-      }
-
       // Se é um refresh do Supabase que falhou (não deve acontecer, mas por segurança)
-      if (reqUrl.includes('/api/auth/refresh')) {
+      if (originalRequest.url?.includes('/api/auth/refresh')) {
         forceLogout('Sua sessão expirou. Por favor, faça login novamente.')
         return Promise.reject(err)
       }
@@ -167,10 +155,13 @@ api.interceptors.response.use(
     }
 
     // ─────────────────── ERROS DO SERVIDOR ───────────────────
+    if (status === 401) {
+      // Rotas /api/admin/* usam admin_token próprio passado manualmente — ignora silenciosamente
+      if (originalRequest.url?.includes('/api/admin/')) return Promise.reject(err)
+    }
     if (status >= 500) {
-      // Rotas do painel admin usam token separado — não exibe modal global
       const url = originalRequest.url || ''
-      if (!url.includes('/api/auth/admin') && !url.includes('/api/superadmin')) {
+      if (!url.includes('/api/admin')) {
         notifyAuthError({
           type: 'server_error',
           message: `Erro do servidor: ${err.response?.statusText || 'Erro desconhecido'}`,
@@ -226,7 +217,7 @@ api.interceptors.response.use(
     const duration = Date.now() - response.config._startTime
     // Evita logs recursivos (não loga requisições para a própria rota de logs)
     const url = response.config.url?.replace(response.config.baseURL, '')
-    if (!url?.includes('/api/superadmin/logs')) {
+    if (!url?.includes('/api/admin/logs')) {
       logger.logRequest(
         response.config.method?.toUpperCase(),
         url,
@@ -245,7 +236,7 @@ api.interceptors.response.use(
       const url = config.url?.replace(config.baseURL, '')
       
       // Evita logs recursivos
-      if (!url?.includes('/api/superadmin/logs')) {
+      if (!url?.includes('/api/admin/logs')) {
         logger.logRequest(
           config.method?.toUpperCase(),
           url,
@@ -255,7 +246,7 @@ api.interceptors.response.use(
       }
 
       // Log adicional para erros (também filtra logs)
-      if (status >= 400 && !url?.includes('/api/superadmin/logs')) {
+      if (status >= 400 && !url?.includes('/api/admin/logs')) {
         logger.error(`API Error: ${config.method?.toUpperCase()} ${config.url}`, {
           status,
           statusText: error.response?.statusText,
@@ -269,3 +260,4 @@ api.interceptors.response.use(
 )
 
 export default api
+

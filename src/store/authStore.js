@@ -57,7 +57,7 @@ const useAuthStore = create((set, get) => ({
       if (papel) localStorage.setItem('papel', papel)
 
       set({ user, tenant, papel, token: access_token, loading: false })
-      return { ok: true, superadmin: papel === 'superadmin' }
+      return { ok: true }
     } catch (err) {
       set({ loading: false })
       return { ok: false, error: err.response?.data?.error || err.message || 'Erro ao fazer login' }
@@ -73,7 +73,6 @@ const useAuthStore = create((set, get) => ({
 
   // Reativo — usa estado Zustand, não localStorage direto
   isAuthenticated: () => !!get().token,
-  isSuperAdmin:   () => get().papel === 'superadmin',
 
   setTenant: (tenant) => {
     localStorage.setItem('tenant', JSON.stringify(tenant))

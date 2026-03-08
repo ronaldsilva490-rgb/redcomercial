@@ -34,12 +34,6 @@ import CozinhaView    from './pages/cozinha/CozinhaView'
 import EntregadorView from './pages/entregador/EntregadorView'
 import CaixaView      from './pages/caixa/CaixaView'
 import CaixaSessao    from './pages/caixa/CaixaSessao'
-import SuperAdminLayout  from './components/layout/SuperAdminLayout'
-import SystemStatus      from './pages/superadmin/SystemStatus'
-import TenantsOverview   from './pages/superadmin/TenantsOverview'
-import DBExplorer        from './pages/superadmin/DBExplorer'
-import DeployControl     from './pages/superadmin/DeployControl'
-import Logs              from './pages/superadmin/Logs'
 
 function PrivateRoute({ children }) {
   const token = useAuthStore(s => s.token)
@@ -161,14 +155,6 @@ export default function App() {
           <Route path="sessao-caixa" element={<CaixaSessao />} />
           <Route path="admin/users"    element={<Users />} />
           <Route path="admin/settings" element={<Settings />} />
-        </Route>
-        {/* Superadmin — layout próprio, sem menus de empresa */}
-        <Route path="/superadmin" element={<PrivateRoute><SuperAdminLayout /></PrivateRoute>}>
-          <Route index              element={<SystemStatus />} />
-          <Route path="empresas"    element={<TenantsOverview />} />
-          <Route path="db"          element={<DBExplorer />} />
-          <Route path="deploy"      element={<DeployControl />} />
-          <Route path="logs"        element={<Logs />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

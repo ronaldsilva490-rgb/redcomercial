@@ -59,7 +59,7 @@ export default function AdminRegister() {
 
     setCarregando(true)
     try {
-      const { data } = await api.post('/api/auth/admin/register', {
+      const { data } = await api.post('/api/admin/register', {
         nome: nome.trim(),
         username: username.trim().toLowerCase(),
         email: email.trim().toLowerCase(),

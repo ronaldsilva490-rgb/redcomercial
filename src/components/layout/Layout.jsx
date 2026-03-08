@@ -11,9 +11,6 @@ export default function Layout() {
   const { startPolling, stopPolling } = useNotifStore()
   const { tenant, papel } = useAuthStore()
 
-  // Superadmin usa layout próprio
-  if (papel === 'superadmin') return <Navigate to="/superadmin" replace />
-
   useEffect(() => {
     startPolling()
     return () => stopPolling()

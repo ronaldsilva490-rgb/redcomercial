@@ -101,11 +101,6 @@ export default function Sidebar({ open, onClose }) {
   const tipo = tenant?.tipo || 'comercio'
   const papelCfg = PAPEL_VISUAL[papel] || { label: papel || '—', color: 'var(--muted)' }
 
-  // Superadmin tem layout próprio; se cair no sidebar normal, redireciona
-  if (papel === 'superadmin') {
-    return null
-  }
-
   // Seleciona menu
   let navItems
   if (menuByPapel[papel]) {
@@ -214,15 +209,6 @@ export default function Sidebar({ open, onClose }) {
             </>
           )}
 
-          {/* Superadmin */}
-          {papel === 'superadmin' && (
-            <>
-              <div style={{ fontSize: 9, color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, padding: '16px 12px 4px' }}>
-                Sistema
-              </div>
-              <NavLink to="/superadmin" style={linkStyle} onClick={onClose}><ShieldCheck size={14} /><span>Super Admin</span></NavLink>
-            </>
-          )}
         </div>
 
         {/* Seletor de tema */}

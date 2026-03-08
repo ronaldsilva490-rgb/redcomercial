@@ -10,7 +10,7 @@ const useAdminStore = create((set, get) => ({
   login: async (login, password) => {
     set({ loading: true })
     try {
-      const { data } = await api.post('/api/auth/admin/login', {
+      const { data } = await api.post('/api/admin/login', {
         login: login.trim(),
         senha: password
       })
@@ -34,7 +34,7 @@ const useAdminStore = create((set, get) => ({
   register: async (nome, username, email, senha, palavraMestre) => {
     set({ loading: true })
     try {
-      const { data } = await api.post('/api/auth/admin/register', {
+      const { data } = await api.post('/api/admin/register', {
         nome,
         username: username.toLowerCase(),
         email: email.toLowerCase(),
@@ -60,7 +60,7 @@ const useAdminStore = create((set, get) => ({
     if (!token) return { ok: false }
 
     try {
-      const { data } = await api.get('/api/auth/admin/verifica-token', {
+      const { data } = await api.get('/api/admin/verifica-token', {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -89,7 +89,7 @@ const useAdminStore = create((set, get) => ({
     if (!token) return { ok: false, error: 'Não autenticado' }
 
     try {
-      const { data } = await api.get('/api/auth/admin/list', {
+      const { data } = await api.get('/api/admin/list', {
         headers: { Authorization: `Bearer ${token}` }
       })
       return { ok: true, admins: data.data?.admins || [] }
@@ -105,7 +105,7 @@ const useAdminStore = create((set, get) => ({
     if (!token) return { ok: false, error: 'Não autenticado' }
 
     try {
-      const { data } = await api.post(`/api/auth/admin/deactivate/${adminId}`, {}, {
+      const { data } = await api.post(`/api/admin/deactivate/${adminId}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
       return { ok: true, message: data.message }
@@ -121,7 +121,7 @@ const useAdminStore = create((set, get) => ({
     if (!token) return { ok: false, error: 'Não autenticado' }
 
     try {
-      const { data } = await api.post(`/api/auth/admin/activate/${adminId}`, {}, {
+      const { data } = await api.post(`/api/admin/activate/${adminId}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
       return { ok: true, message: data.message }
@@ -137,7 +137,7 @@ const useAdminStore = create((set, get) => ({
     if (!token) return { ok: false, error: 'Não autenticado' }
 
     try {
-      const { data } = await api.delete(`/api/auth/admin/${adminId}`, {
+      const { data } = await api.delete(`/api/admin/${adminId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       return { ok: true, message: data.message }
