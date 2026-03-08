@@ -12,9 +12,14 @@ const api = axios.create({
 
 // Log detalhado de requisições
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token')
+  const url = config.url || ''
+  // Rotas de superadmin/admin usam token separado (admin_token), NÃO o token Supabase
+  const isAdminRoute = url.includes('/api/superadmin') || url.includes('/api/auth/admin')
+  const token = isAdminRoute
+    ? localStorage.getItem('admin_token')
+    : localStorage.getItem('access_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
-  console.log(`[API] ${config.method.toUpperCase()} ${config.baseURL}${config.url}`)
+  console.log(`[API] ${config.method.toUpperCase()} ${config.baseURL}${url}`)
   return config
 })
 
@@ -86,8 +91,16 @@ api.interceptors.response.use(
 
     // ─────────────────── ERROS DE AUTENTICAÇÃO ───────────────────
     if (status === 401 && !originalRequest._retry) {
+      const reqUrl = originalRequest.url || ''
+
+      // Rotas de admin/superadmin usam token próprio — 401 aqui significa sessão admin
+      // expirada, não a sessão Supabase. Não tenta refresh e não exibe modal global.
+      if (reqUrl.includes('/api/superadmin') || reqUrl.includes('/api/auth/admin')) {
+        return Promise.reject(err)
+      }
+
       // Se é um refresh do Supabase que falhou (não deve acontecer, mas por segurança)
-      if (originalRequest.url?.includes('/api/auth/refresh')) {
+      if (reqUrl.includes('/api/auth/refresh')) {
         forceLogout('Sua sessão expirou. Por favor, faça login novamente.')
         return Promise.reject(err)
       }
@@ -256,4 +269,3 @@ api.interceptors.response.use(
 )
 
 export default api
-
