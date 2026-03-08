@@ -40,8 +40,8 @@ export default function Register() {
         const fetchTest = await fetch('https://redbackend.fly.dev/api/business/tipos')
         console.log('【REGISTER】 Fetch direto status:', fetchTest.status)
         
-        // Depois com axios
-        const response = await api.get('/api/business/tipos')
+        // Depois com axios (força não enviar header Authorization para evitar refresh automático)
+        const response = await api.get('/api/business/tipos', { headers: { Authorization: undefined } })
         console.log('【REGISTER】 Resposta completa (axios):', response)
         console.log('【REGISTER】 response.data:', response.data)
         
