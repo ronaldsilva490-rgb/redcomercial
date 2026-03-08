@@ -92,42 +92,44 @@ export default function Register() {
     try {
       console.log('【REGISTER】 Iniciando registro com email:', form.email)
 
-      // 1. Cria usuário via Supabase client
+      const tenantPayload = {
+        nome: form.nome,
+        tipo: String(tipo || ''),
+        cnpj: form.cnpj,
+        telefone: form.telefone,
+        cidade: form.cidade,
+        estado: form.estado,
+      }
+
+      // Tenta criar via Supabase client primeiro (sem confirmação de email)
       const { data: signData, error: signError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
       })
-      if (signError) {
-        console.error('【REGISTER】 Supabase signup error:', signError)
-        toast.error(signError.message || 'Erro ao criar usuário')
-        setLoading(false)
-        return
-      }
 
       const accessToken = signData?.session?.access_token || null
-      const refreshToken = signData?.session?.refresh_token || null
 
-      // 2. Se necessário, troque token com backend para criar o tenant e vincular usuário
-      if (accessToken) {
+      if (!signError && accessToken) {
+        // Supabase retornou sessão (auto-confirm ativo) → cria tenant via backend autenticado
+        console.log('【REGISTER】 Supabase retornou sessão, criando tenant...')
         api.defaults.headers.common.Authorization = `Bearer ${accessToken}`
-        const payload = { tenant: { nome: form.nome, tipo: String(tipo || ''), cnpj: form.cnpj, telefone: form.telefone, cidade: form.cidade, estado: form.estado } }
-        console.log('【REGISTER】 Criando tenant com payload:', payload)
-        await api.post('/api/auth/register-tenant', payload)
+        await api.post('/api/auth/register-tenant', { tenant: tenantPayload })
       } else {
-        // Fallback: se o Supabase não retornar sessão (email confirm required),
-        // pede ao backend para criar o usuário + tenant via admin endpoint.
-        try {
-          console.warn('【REGISTER】 Nenhum access token recebido no signup; solicitando criação via backend')
-          await api.post('/api/auth/register', { email: form.email, password: form.password, tenant: { nome: form.nome, tipo: String(tipo || ''), cnpj: form.cnpj, telefone: form.telefone, cidade: form.cidade, estado: form.estado } })
-        } catch (e) {
-          console.error('【REGISTER】 Erro ao criar usuário+tenant via backend:', e)
-          toast.error('Erro ao criar conta via backend')
-          setLoading(false)
-          return
+        // Supabase não retornou sessão (email confirm obrigatório) OU houve erro no signUp.
+        // Usa o endpoint backend que cria usuário+tenant via service_role (admin).
+        console.log('【REGISTER】 Sem sessão do Supabase, criando via backend admin...')
+        if (signError && !signError.message?.includes('already registered')) {
+          // Erro inesperado no signUp (não "já existe") → tenta pelo backend de qualquer forma
+          console.warn('【REGISTER】 Supabase signUp error (tentando backend):', signError.message)
         }
+        await api.post('/api/auth/register', {
+          email: form.email,
+          password: form.password,
+          tenant: tenantPayload,
+        })
       }
 
-      // 3. Faz login automático (se ainda não houver sessão válida)
+      // Login automático após cadastro
       console.log('【REGISTER】 Tentando fazer login automático...')
       const result = await login(form.email, form.password)
 

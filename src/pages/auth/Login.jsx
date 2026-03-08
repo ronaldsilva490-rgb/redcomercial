@@ -47,9 +47,9 @@ export default function Login() {
           try {
             const resp = await api.get('/api/tenants/me')
             const tenant = resp.data?.data || null
-            const papel = resp.data?.data?.papel || resp.data?.data?.papel
+            const papel = resp.data?.data?.papel || null
             if (tenant) localStorage.setItem('tenant', JSON.stringify(tenant))
-            if (resp.data?.data?.papel) localStorage.setItem('papel', resp.data.data.papel)
+            if (papel) localStorage.setItem('papel', papel)
 
             toast.success('Bem-vindo!')
             setTimeout(() => navigate('/', { replace: true }), 100)
