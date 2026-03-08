@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, ArrowRight, Lock, Settings } from 'lucide-react'
 import toast from 'react-hot-toast'
-import api from '../../services/api'
-import supabase from '../../services/supabaseClient'
+import useAuthStore from '../../store/authStore'
 import LOGO from '../../assets/logo.png'
 
 export default function Login() {
   const navigate = useNavigate()
+  const { login, token } = useAuthStore()
+
+  useEffect(() => {
+    if (token) navigate('/', { replace: true })
+  }, [token])
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
@@ -23,75 +27,15 @@ export default function Login() {
       toast.error('Preencha todos os campos')
       return
     }
-
     setCarregando(true)
     try {
-      console.log('【LOGIN】 Tentando login com email (supabase):', email)
-      // Primeiro tenta autenticar diretamente via Supabase JS (cliente)
-      // Tenta autenticar via Supabase client e usar token para obter tenant/papel
-      try {
-        const { data: sbData, error: sbError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password: senha
-        })
-
-        if (!sbError && sbData?.session?.access_token) {
-          console.debug('Supabase client login success:', sbData)
-          const at = sbData.session.access_token
-          const rt = sbData.session.refresh_token
-          localStorage.setItem('access_token', at)
-          if (rt) localStorage.setItem('refresh_token', rt)
-          if (sbData.user) localStorage.setItem('user', JSON.stringify({ id: sbData.user.id, email: sbData.user.email }))
-
-          // Busca tenant/papel no backend usando o access_token do Supabase
-          try {
-            const resp = await api.get('/api/tenants/me')
-            const tenant = resp.data?.data || null
-            const papel = resp.data?.data?.papel || null
-            if (tenant) localStorage.setItem('tenant', JSON.stringify(tenant))
-            if (papel) localStorage.setItem('papel', papel)
-
-            toast.success('Bem-vindo!')
-            setTimeout(() => navigate('/', { replace: true }), 100)
-            return
-          } catch (e) {
-            console.debug('Erro ao obter tenant via token, fallback para backend login', e)
-            // continua para fallback abaixo
-          }
-        } else {
-          console.debug('Supabase client login failed, falling back to backend:', sbError?.message)
-        }
-      } catch (sbEx) {
-        console.debug('Supabase client threw error:', sbEx)
-      }
-
-      // Fallback: chama o backend tradicional com email+senha
-      console.log('【LOGIN】 Calling backend for tenant and papel (fallback):', email)
-      const { data } = await api.post('/api/auth/login', {
-        email: email.trim(),
-        password: senha
-      })
-
-      console.log('【LOGIN】 Response:', data)
-
-      if (data.data?.access_token) {
-        localStorage.setItem('access_token', data.data.access_token)
-        localStorage.setItem('refresh_token', data.data.refresh_token)
-        localStorage.setItem('user', JSON.stringify(data.data.user))
-        localStorage.setItem('tenant', JSON.stringify(data.data.tenant))
-        localStorage.setItem('papel', data.data.papel)
-        
+      const result = await login(email.trim(), senha)
+      if (result.ok) {
         toast.success('Bem-vindo!')
-        setTimeout(() => {
-          navigate('/', { replace: true })
-        }, 100)
+        window.location.replace('/')
       } else {
-        toast.error('Resposta inválida do servidor')
+        toast.error(result.error || 'Erro ao fazer login')
       }
-    } catch (err) {
-      console.error('【LOGIN】 Erro:', err)
-      const msg = err.response?.data?.error || err.response?.data?.detail || err.message || 'Erro ao fazer login'
-      toast.error(msg)
     } finally {
       setCarregando(false)
     }
@@ -495,4 +439,3 @@ export default function Login() {
     </div>
   )
 }
-
