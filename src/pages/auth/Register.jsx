@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, ArrowLeft, Check, Building2, Phone, Mail, MapPin, Eye, EyeOff, Settings } from 'lucide-react'
 import api from '../../services/api'
 import useAuthStore from '../../store/authStore'
-import supabase from '../../services/supabaseClient'
 import toast from 'react-hot-toast'
 import LOGO from '../../assets/logo.png'
 
@@ -101,33 +100,13 @@ export default function Register() {
         estado: form.estado,
       }
 
-      // Tenta criar via Supabase client primeiro (sem confirmação de email)
-      const { data: signData, error: signError } = await supabase.auth.signUp({
+      // Sempre usa o backend admin — único ponto de criação, evita usuário fantasma
+      console.log('【REGISTER】 Criando via backend admin...')
+      await api.post('/api/auth/register', {
         email: form.email,
         password: form.password,
+        tenant: tenantPayload,
       })
-
-      const accessToken = signData?.session?.access_token || null
-
-      if (!signError && accessToken) {
-        // Supabase retornou sessão (auto-confirm ativo) → cria tenant via backend autenticado
-        console.log('【REGISTER】 Supabase retornou sessão, criando tenant...')
-        api.defaults.headers.common.Authorization = `Bearer ${accessToken}`
-        await api.post('/api/auth/register-tenant', { tenant: tenantPayload })
-      } else {
-        // Supabase não retornou sessão (email confirm obrigatório) OU houve erro no signUp.
-        // Usa o endpoint backend que cria usuário+tenant via service_role (admin).
-        console.log('【REGISTER】 Sem sessão do Supabase, criando via backend admin...')
-        if (signError && !signError.message?.includes('already registered')) {
-          // Erro inesperado no signUp (não "já existe") → tenta pelo backend de qualquer forma
-          console.warn('【REGISTER】 Supabase signUp error (tentando backend):', signError.message)
-        }
-        await api.post('/api/auth/register', {
-          email: form.email,
-          password: form.password,
-          tenant: tenantPayload,
-        })
-      }
 
       // Login automático após cadastro
       console.log('【REGISTER】 Tentando fazer login automático...')
