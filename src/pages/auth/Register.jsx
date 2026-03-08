@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, ArrowLeft, Check, Building2, Phone, Mail, MapPin, Eye, EyeOff, Settings } from 'lucide-react'
 import api from '../../services/api'
 import useAuthStore from '../../store/authStore'
+import supabase from '../../services/supabaseClient'
 import toast from 'react-hot-toast'
 import LOGO from '../../assets/logo.png'
 
@@ -90,41 +91,44 @@ export default function Register() {
     setLoading(true)
     try {
       console.log('【REGISTER】 Iniciando registro com email:', form.email)
-      
-      // 1. Registra o novo usuário
-      const payload = {
+
+      // 1. Cria usuário via Supabase client
+      const { data: signData, error: signError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
-        tenant: {
-          nome: form.nome,
-          tipo: String(tipo || ''),
-          cnpj: form.cnpj,
-          telefone: form.telefone,
-          cidade: form.cidade,
-          estado: form.estado,
-        }
+      })
+      if (signError) {
+        console.error('【REGISTER】 Supabase signup error:', signError)
+        toast.error(signError.message || 'Erro ao criar usuário')
+        setLoading(false)
+        return
       }
-      console.log('【REGISTER】 Payload:', payload)
-      await api.post('/api/auth/register', payload)
-      console.log('【REGISTER】 ✓ Usuário criado com sucesso')
-      
-      // 2. Faz login automaticamente
+
+      const accessToken = signData?.session?.access_token || null
+      const refreshToken = signData?.session?.refresh_token || null
+
+      // 2. Se necessário, troque token com backend para criar o tenant e vincular usuário
+      if (accessToken) {
+        api.defaults.headers.common.Authorization = `Bearer ${accessToken}`
+        const payload = { tenant: { nome: form.nome, tipo: String(tipo || ''), cnpj: form.cnpj, telefone: form.telefone, cidade: form.cidade, estado: form.estado } }
+        console.log('【REGISTER】 Criando tenant com payload:', payload)
+        await api.post('/api/auth/register-tenant', payload)
+      } else {
+        // Caso não receba token (confirm flow), solicita criação posterior
+        console.warn('【REGISTER】 Nenhum access token recebido no signup; tenant será criado após confirmação de email')
+      }
+
+      // 3. Faz login automático (se ainda não houver sessão válida)
       console.log('【REGISTER】 Tentando fazer login automático...')
       const result = await login(form.email, form.password)
-      
+
       if (result.ok) {
         console.log('【REGISTER】 ✓ Login bem-sucedido')
         toast.success('Bem-vindo ao RED! Seu negócio foi criado.')
-        
-        // 3. Aguarda um pouco para garantir sincronização de estado
-        setTimeout(() => {
-          console.log('【REGISTER】 Redirecionando para dashboard...')
-          navigate('/', { replace: true })
-        }, 500)
+        setTimeout(() => navigate('/', { replace: true }), 500)
       } else {
         console.error('【REGISTER】 ❌ Login falhou:', result.error)
         toast.error(result.error || 'Erro ao fazer login após registro')
-        // Redireciona para login se o login automático falhar
         setTimeout(() => navigate('/login', { replace: true }), 1500)
       }
     } catch (err) {
