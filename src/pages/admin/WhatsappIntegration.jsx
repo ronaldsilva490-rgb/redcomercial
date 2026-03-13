@@ -32,26 +32,15 @@ const PROVIDERS = [
 ]
 
 const TTS_PROVIDERS = [
-  { value: 'edge',   label: 'Edge-TTS (Online, Alta Qualidade)', color: '#ec4899' },
-  { value: 'espeak', label: 'espeak-ng (Offline, Gratuito)', color: '#22c55e' },
+  { value: 'edge',   label: 'Edge-TTS — Microsoft (Recomendado)', color: '#ec4899' },
+  { value: 'espeak', label: 'espeak-ng — Offline / Robótico (manual)', color: '#22c55e' },
   { value: 'openai', label: 'OpenAI TTS', color: '#10A37F' },
 ]
 
 const EDGE_VOICES = [
-  { value: 'pt-BR-FranciscaNeural', label: 'Francisca (Feminino)' },
-  { value: 'pt-BR-AntonioNeural', label: 'Antônio (Masculino)' },
-  { value: 'pt-BR-BrendaNeural', label: 'Brenda (Feminino)' },
-  { value: 'pt-BR-DonatoNeural', label: 'Donato (Masculino)' },
-  { value: 'pt-BR-ElviraNeural', label: 'Elvira (Feminino)' },
-  { value: 'pt-BR-FabioNeural', label: 'Fábio (Masculino)' },
-  { value: 'pt-BR-HumbertoNeural', label: 'Humberto (Masculino)' },
-  { value: 'pt-BR-JulioNeural', label: 'Júlio (Masculino)' },
-  { value: 'pt-BR-LeilaNeural', label: 'Leila (Feminino)' },
-  { value: 'pt-BR-ManoelNeural', label: 'Manoel (Masculino)' },
-  { value: 'pt-BR-NicolauNeural', label: 'Nicolau (Masculino)' },
-  { value: 'pt-BR-ThalitaNeural', label: 'Thalita (Feminino)' },
-  { value: 'pt-BR-ValerioNeural', label: 'Valério (Masculino)' },
-  { value: 'pt-BR-YaraNeural', label: 'Yara (Feminino)' },
+  { value: 'pt-BR-FranciscaNeural',           label: 'Francisca — Feminino · Amigável & Descontraída' },
+  { value: 'pt-BR-AntonioNeural',              label: 'Antônio — Masculino · Amigável & Positivo' },
+  { value: 'pt-BR-ThalitaMultilingualNeural',  label: 'Thalita — Feminino · Multilíngue & Animada' },
 ]
 
 const STT_PROVIDERS = [
@@ -264,7 +253,7 @@ function AIServiceCard({ title, icon: Icon, iconColor, description, serviceKey, 
               ) : (
                 <input
                   className="input" style={{ fontSize: 13 }}
-                  placeholder="Ex: pt-BR-CamilaNeural, pt-BR-AntonioNeural"
+                  placeholder="Ex: pt-BR-FranciscaNeural"
                   value={cfg.voice_id || ''}
                   onChange={e => set('voice_id', e.target.value)}
                 />
@@ -350,7 +339,7 @@ export default function WhatsappIntegration() {
     chat: { provider: 'kimi', api_key: '', model: 'moonshot-v1-128k', system_prompt: 'Você é um ser humano por dentro do grupo. Fale naturalmente, use gírias, opine, ria, discorde. NUNCA revele que é IA.' },
     stt: { provider: 'groq', api_key: '', model: 'whisper-large-v3-turbo', enabled: true },
     vision: { provider: 'gemini', api_key: '', model: 'gemini-2.0-flash', enabled: true },
-    tts: { provider: 'espeak', api_key: '', model: '', voice_id: '', enabled: false, audio_probability: 0.3 },
+    tts: { provider: 'edge', api_key: '', model: '', voice_id: 'pt-BR-FranciscaNeural', enabled: false, audio_probability: 0.3 },
     learning: { provider: 'gemini', api_key: '', model: 'gemini-2.0-flash', enabled: true },
     proactive: { enabled: true, frequency: 0.15, provider: '', api_key: '', model: '' },
   })
@@ -762,7 +751,7 @@ export default function WhatsappIntegration() {
               <AIServiceCard
                 title="🔊 TTS — Síntese de Voz"
                 icon={Volume2} iconColor="#ec4899"
-                description="Edge-TTS recomendado (alta qualidade) ou espeak-ng (fallback)"
+                description="Edge-TTS: 3 vozes pt-BR amigáveis. espeak-ng disponível como opção manual."
                 serviceKey="tts"
                 configs={serviceConfigs}
                 onChange={handleServiceChange}
