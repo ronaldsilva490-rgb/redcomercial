@@ -1,0 +1,1102 @@
+[
+  {
+    "file": "components/layout/Sidebar.jsx",
+    "type": "success",
+    "original": "Sessão encerrada! Volte sempre 👋"
+  },
+  {
+    "file": "components/layout/SuperAdminLayout.jsx",
+    "type": "success",
+    "original": "Você saiu com sucesso! Até logo 👋"
+  },
+  {
+    "file": "components/ui/ImageUpload.jsx",
+    "type": "success",
+    "original": "Foto anexada com sucesso! 📸"
+  },
+  {
+    "file": "components/ui/ImageUpload.jsx",
+    "type": "error",
+    "original": "Não consegui enviar a foto agora, mas salvei ela aqui! ⚠️"
+  },
+  {
+    "file": "components/ui/ImageUpload.jsx",
+    "type": "error",
+    "original": "Máximo de ${max} fotos"
+  },
+  {
+    "file": "components/ui/ImageUpload.jsx",
+    "type": "error",
+    "original": "${f.name}: ${err}"
+  },
+  {
+    "file": "components/ui/ImageUpload.jsx",
+    "type": "success",
+    "original": "${remotas.length} foto(s) adicionada(s)!"
+  },
+  {
+    "file": "pages/Login.jsx",
+    "type": "error",
+    "original": "Ei! Alguns campos obrigatórios ficaram vazios ✍️"
+  },
+  {
+    "file": "pages/Login.jsx",
+    "type": "success",
+    "original": "Seja muito bem-vindo! 🚀"
+  },
+  {
+    "file": "pages/admin/AdminDashboard.jsx",
+    "type": "success",
+    "original": "Sessão encerrada! Volte sempre 👋"
+  },
+  {
+    "file": "pages/admin/AdminDashboard.jsx",
+    "type": "success",
+    "original": "Administrador temporariamente na geladeira 🧊"
+  },
+  {
+    "file": "pages/admin/AdminDashboard.jsx",
+    "type": "error",
+    "original": "Deu um errinho ao tentar desativar... 😕"
+  },
+  {
+    "file": "pages/admin/AdminDashboard.jsx",
+    "type": "success",
+    "original": "Conta de admin apagada definitivamente! 🗑️"
+  },
+  {
+    "file": "pages/admin/AdminDashboard.jsx",
+    "type": "error",
+    "original": "Puxa, não consegui apagar o registro agora 😕"
+  },
+  {
+    "file": "pages/admin/AdminDashboard.jsx",
+    "type": "success",
+    "original": "Logs antigos removidos"
+  },
+  {
+    "file": "pages/admin/AdminDashboard.jsx",
+    "type": "error",
+    "original": "Erro ao limpar logs"
+  },
+  {
+    "file": "pages/admin/AdminDashboard.jsx",
+    "type": "success",
+    "original": "Configurações da Empresa salvas com sucesso!"
+  },
+  {
+    "file": "pages/admin/AdminDashboard.jsx",
+    "type": "error",
+    "original": "Opa, falha ao salvar configurações"
+  },
+  {
+    "file": "pages/admin/AdminLogin.jsx",
+    "type": "error",
+    "original": "Ei! Alguns campos obrigatórios ficaram vazios ✍️"
+  },
+  {
+    "file": "pages/admin/AdminLogin.jsx",
+    "type": "success",
+    "original": "Tudo pronto, Chefe! Painel liberado 🚀"
+  },
+  {
+    "file": "pages/admin/AdminManagement.jsx",
+    "type": "error",
+    "original": "Por favor, preencha todos os espaços em branco! ✍️"
+  },
+  {
+    "file": "pages/admin/AdminManagement.jsx",
+    "type": "error",
+    "original": "Nome deve ter no mínimo 3 caracteres"
+  },
+  {
+    "file": "pages/admin/AdminManagement.jsx",
+    "type": "error",
+    "original": "Username inválido (apenas letras, números, ponto, traço e underline)"
+  },
+  {
+    "file": "pages/admin/AdminManagement.jsx",
+    "type": "error",
+    "original": "Email inválido"
+  },
+  {
+    "file": "pages/admin/AdminManagement.jsx",
+    "type": "error",
+    "original": "Sua senha precisa ser um pouco maior (mínimo 8 dígitos) 🔐"
+  },
+  {
+    "file": "pages/admin/AdminManagement.jsx",
+    "type": "error",
+    "original": "Ops! As duas senhas que você digitou estão diferentes 🧐"
+  },
+  {
+    "file": "pages/admin/AdminManagement.jsx",
+    "type": "error",
+    "original": "Palavra-mestre de admin obrigatória"
+  },
+  {
+    "file": "pages/admin/AdminManagement.jsx",
+    "type": "success",
+    "original": "Novo administrador está na área! 👑"
+  },
+  {
+    "file": "pages/admin/AdminManagement.jsx",
+    "type": "success",
+    "original": "Administrador desativado"
+  },
+  {
+    "file": "pages/admin/AdminManagement.jsx",
+    "type": "success",
+    "original": "Administrador ativado"
+  },
+  {
+    "file": "pages/admin/AdminManagement.jsx",
+    "type": "success",
+    "original": "Administrador deletado"
+  },
+  {
+    "file": "pages/admin/AdminManagement.jsx",
+    "type": "success",
+    "original": "Sessão encerrada! Volte sempre 👋"
+  },
+  {
+    "file": "pages/admin/AdminRegister.jsx",
+    "type": "error",
+    "original": "Por favor, preencha todos os espaços em branco! ✍️"
+  },
+  {
+    "file": "pages/admin/AdminRegister.jsx",
+    "type": "error",
+    "original": "Nome deve ter ao menos 3 caracteres"
+  },
+  {
+    "file": "pages/admin/AdminRegister.jsx",
+    "type": "error",
+    "original": "Username inválido (use apenas letras, números, ponto, traço e underline)"
+  },
+  {
+    "file": "pages/admin/AdminRegister.jsx",
+    "type": "error",
+    "original": "Email inválido"
+  },
+  {
+    "file": "pages/admin/AdminRegister.jsx",
+    "type": "error",
+    "original": "Senha deve ter ao menos 8 caracteres"
+  },
+  {
+    "file": "pages/admin/AdminRegister.jsx",
+    "type": "error",
+    "original": "Ops! As duas senhas que você digitou estão diferentes 🧐"
+  },
+  {
+    "file": "pages/admin/AdminRegister.jsx",
+    "type": "error",
+    "original": "Palavra-mestre de admin obrigatória"
+  },
+  {
+    "file": "pages/admin/AdminRegister.jsx",
+    "type": "success",
+    "original": "Administrador criado com sucesso!"
+  },
+  {
+    "file": "pages/admin/Settings.jsx",
+    "type": "error",
+    "original": "Como podemos te chamar? O nome é obrigatório! 👤"
+  },
+  {
+    "file": "pages/admin/Settings.jsx",
+    "type": "error",
+    "original": "Chave PIX inválida"
+  },
+  {
+    "file": "pages/admin/Settings.jsx",
+    "type": "success",
+    "original": "Tudo salvo e atualizado! ✨"
+  },
+  {
+    "file": "pages/admin/Users.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar funcionários. Tente novamente 😕"
+  },
+  {
+    "file": "pages/admin/Users.jsx",
+    "type": "error",
+    "original": "Crie um login e senha para essa pessoa, por favor! 🔑"
+  },
+  {
+    "file": "pages/admin/Users.jsx",
+    "type": "error",
+    "original": "A senha é super secreta! Precisa ter no mínimo 6 caracteres 🔐"
+  },
+  {
+    "file": "pages/admin/Users.jsx",
+    "type": "error",
+    "original": "Putz, esse username já tem dono! Tente outro 😅"
+  },
+  {
+    "file": "pages/admin/Users.jsx",
+    "type": "error",
+    "original": "Nome de usuário inválido"
+  },
+  {
+    "file": "pages/admin/Users.jsx",
+    "type": "success",
+    "original": "Novo membro do time cadastrado com sucesso! 🎉"
+  },
+  {
+    "file": "pages/admin/Users.jsx",
+    "type": "error",
+    "original": "Erro ao atualizar"
+  },
+  {
+    "file": "pages/admin/Users.jsx",
+    "type": "success",
+    "original": "O cargo desse usuário acabou de ser alterado! 🛠️"
+  },
+  {
+    "file": "pages/admin/Users.jsx",
+    "type": "error",
+    "original": "Vixe... não consegui salvar a alteração em papel 😕"
+  },
+  {
+    "file": "pages/admin/Users.jsx",
+    "type": "error",
+    "original": "O funcionário precisa estar vinculado à loja atual!"
+  },
+  {
+    "file": "pages/admin/WhatsappIntegration.jsx",
+    "type": "success",
+    "original": "${data.groups.length} grupos encontrados"
+  },
+  {
+    "file": "pages/admin/WhatsappIntegration.jsx",
+    "type": "error",
+    "original": "Erro ao buscar grupos do WhatsApp"
+  },
+  {
+    "file": "pages/admin/WhatsappIntegration.jsx",
+    "type": "error",
+    "original": "Digite o número de destino!"
+  },
+  {
+    "file": "pages/admin/WhatsappIntegration.jsx",
+    "type": "success",
+    "original": "Mensagem testada via Cloud API"
+  },
+  {
+    "file": "pages/admin/WhatsappIntegration.jsx",
+    "type": "success",
+    "original": "Mensagem encaminhada ao servidor (Sessão Web)!"
+  },
+  {
+    "file": "pages/admin/WhatsappIntegration.jsx",
+    "type": "error",
+    "original": "Falha no disparo"
+  },
+  {
+    "file": "pages/admin/WhatsappIntegration.jsx",
+    "type": "success",
+    "original": "Serviço disparado. Aguardando a geração do QRCode..."
+  },
+  {
+    "file": "pages/auth/Login.jsx",
+    "type": "error",
+    "original": "Ei! Alguns campos obrigatórios ficaram vazios ✍️"
+  },
+  {
+    "file": "pages/auth/Login.jsx",
+    "type": "success",
+    "original": "Seja muito bem-vindo! 🚀"
+  },
+  {
+    "file": "pages/auth/Register.jsx",
+    "type": "error",
+    "original": "Estrutura de resposta inesperada"
+  },
+  {
+    "file": "pages/auth/Register.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar tipos de negócio - Backend offline?. Tente novamente 😕"
+  },
+  {
+    "file": "pages/auth/Register.jsx",
+    "type": "error",
+    "original": "Selecione o tipo de negócio"
+  },
+  {
+    "file": "pages/auth/Register.jsx",
+    "type": "error",
+    "original": "Informe o nome do negócio"
+  },
+  {
+    "file": "pages/auth/Register.jsx",
+    "type": "error",
+    "original": "Preencha email e senha"
+  },
+  {
+    "file": "pages/auth/Register.jsx",
+    "type": "error",
+    "original": "Senhas não conferem"
+  },
+  {
+    "file": "pages/auth/Register.jsx",
+    "type": "error",
+    "original": "Senha mínima: 6 caracteres"
+  },
+  {
+    "file": "pages/auth/Register.jsx",
+    "type": "success",
+    "original": "Bem-vindo ao RED! Seu negócio foi criado."
+  },
+  {
+    "file": "pages/bills/Bills.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar contas. Tente novamente 😕"
+  },
+  {
+    "file": "pages/bills/Bills.jsx",
+    "type": "error",
+    "original": "Descrição obrigatória"
+  },
+  {
+    "file": "pages/bills/Bills.jsx",
+    "type": "error",
+    "original": "Valor inválido"
+  },
+  {
+    "file": "pages/bills/Bills.jsx",
+    "type": "error",
+    "original": "Data obrigatória"
+  },
+  {
+    "file": "pages/bills/Bills.jsx",
+    "type": "success",
+    "original": "Pronto, continha foi pra lista do devedor 💸"
+  },
+  {
+    "file": "pages/bills/Bills.jsx",
+    "type": "success",
+    "original": "Conta atualizada!"
+  },
+  {
+    "file": "pages/bills/Bills.jsx",
+    "type": "success",
+    "original": "Pago!"
+  },
+  {
+    "file": "pages/bills/Bills.jsx",
+    "type": "success",
+    "original": "Removida"
+  },
+  {
+    "file": "pages/caixa/CaixaSessao.jsx",
+    "type": "error",
+    "original": "Erro ao verificar sessão do caixa"
+  },
+  {
+    "file": "pages/caixa/CaixaSessao.jsx",
+    "type": "success",
+    "original": "Caixa aberto e brilhando! Vamo que vamo 🚀"
+  },
+  {
+    "file": "pages/caixa/CaixaSessao.jsx",
+    "type": "success",
+    "original": "Caixa trancado! Descanso merecido 👋"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "error",
+    "original": "A prateleira emperrou, não consegui carregar os produtos 📦"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "error",
+    "original": "Nome e endereço são obrigatórios"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "error",
+    "original": "Adicione pelo menos um item"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar pedidos. Tente novamente 😕"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "error",
+    "original": "Erro ao buscar histórico"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "success",
+    "original": "Cliente associado ao pedido!"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar pedido. Tente novamente 😕"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "success",
+    "original": "Pedido fechado! 💰"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "success",
+    "original": "PIX confirmado! Cozinha notificada. 🍳"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "success",
+    "original": "PIX confirmado! ✅"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "success",
+    "original": "Pedido cancelado. Todos foram notificados."
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "success",
+    "original": "Tudo salvo e atualizado! ✨"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "success",
+    "original": "Show! O pedido foi lá pra cozinha 🍳"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "success",
+    "original": "Venda registrada e fechada! ✅"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "success",
+    "original": "Delivery pré-pago criado! Cozinha notificada. 🍳"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "success",
+    "original": "Bora acelerar! Entrega foi agendada 🛵"
+  },
+  {
+    "file": "pages/caixa/CaixaView.jsx",
+    "type": "success",
+    "original": "Garçom chamado! 📢"
+  },
+  {
+    "file": "pages/clients/Clients.jsx",
+    "type": "error",
+    "original": "Erro ao carregar"
+  },
+  {
+    "file": "pages/clients/Clients.jsx",
+    "type": "error",
+    "original": "Como podemos te chamar? O nome é obrigatório! 👤"
+  },
+  {
+    "file": "pages/clients/Clients.jsx",
+    "type": "success",
+    "original": "É isso aí! Novo cliente salvo na casa 🎉"
+  },
+  {
+    "file": "pages/clients/Clients.jsx",
+    "type": "success",
+    "original": "Cliente atualizado!"
+  },
+  {
+    "file": "pages/clients/Clients.jsx",
+    "type": "error",
+    "original": "Para quem é essa venda? Selecione um cliente da lista! 🧑‍💼"
+  },
+  {
+    "file": "pages/clients/Clients.jsx",
+    "type": "success",
+    "original": "Lead criado!"
+  },
+  {
+    "file": "pages/clients/Clients.jsx",
+    "type": "error",
+    "original": "Erro ao atualizar"
+  },
+  {
+    "file": "pages/clients/Clients.jsx",
+    "type": "success",
+    "original": "Cliente removido"
+  },
+  {
+    "file": "pages/clients/Clients.jsx",
+    "type": "error",
+    "original": "Erro ao remover"
+  },
+  {
+    "file": "pages/cozinha/CozinhaView.jsx",
+    "type": "error",
+    "original": "Vixe... não consegui salvar a alteração em item 😕"
+  },
+  {
+    "file": "pages/entregador/EntregadorView.jsx",
+    "type": "success",
+    "original": "Saindo do forno para a casa do cliente! Vrumm 🛵"
+  },
+  {
+    "file": "pages/entregador/EntregadorView.jsx",
+    "type": "success",
+    "original": "✅ Entrega confirmada! Pedido pré-pago — caixa notificado para fechar."
+  },
+  {
+    "file": "pages/entregador/EntregadorView.jsx",
+    "type": "success",
+    "original": "✅ Entrega confirmada! Caixa notificado para receber pagamento."
+  },
+  {
+    "file": "pages/finance/Finance.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar financeiro. Tente novamente 😕"
+  },
+  {
+    "file": "pages/finance/Finance.jsx",
+    "type": "error",
+    "original": "Descrição é obrigatória"
+  },
+  {
+    "file": "pages/finance/Finance.jsx",
+    "type": "error",
+    "original": "Valor inválido"
+  },
+  {
+    "file": "pages/finance/Finance.jsx",
+    "type": "error",
+    "original": "Sem data não rola... Quando essa conta vence? 🗓️"
+  },
+  {
+    "file": "pages/finance/Finance.jsx",
+    "type": "success",
+    "original": "Lançamento criado!"
+  },
+  {
+    "file": "pages/finance/Finance.jsx",
+    "type": "success",
+    "original": "Lançamento atualizado!"
+  },
+  {
+    "file": "pages/finance/Finance.jsx",
+    "type": "success",
+    "original": "Dinheiro no caixa! Conta paga com sucesso 💲"
+  },
+  {
+    "file": "pages/finance/Finance.jsx",
+    "type": "success",
+    "original": "Pagamento estornado"
+  },
+  {
+    "file": "pages/finance/Finance.jsx",
+    "type": "success",
+    "original": "Item apagado com sucesso! 🗑️"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar dados. Tente novamente 😕"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar comanda. Tente novamente 😕"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "success",
+    "original": "Mesa ${selTable.numero} aberta!"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "error",
+    "original": "Coloca alguma coisa na bandeja antes de fechar! 🍽️"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "error",
+    "original": "Ei! Não tem nenhuma comanda rolando nessa mesa 🤷‍♂️"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "success",
+    "original": "Anotado! Pedido disparado lá pra trás 🚀"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "success",
+    "original": "✅ \"${itemNome}\" entregue na mesa!"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "success",
+    "original": "Item \"${cancelItem.nome}\" removido"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "success",
+    "original": "Demos um toque no pessoal do Caixa! 🛎️"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "error",
+    "original": "Erro ao notificar caixa"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "error",
+    "original": "Aguardando cozinha: ${cozinhaItemsPendentes.length} item(s) ainda não prontos"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "success",
+    "original": "Conta fechada! Mais uma mesa bem servida 🧾"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "success",
+    "original": "PIX confirmado! ✅"
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "success",
+    "original": "Comanda cancelada. Todos foram notificados."
+  },
+  {
+    "file": "pages/garcom/GarcomView.jsx",
+    "type": "error",
+    "original": "Aguardando cozinha terminar o preparo"
+  },
+  {
+    "file": "pages/hospedagem/Acomodacoes.jsx",
+    "type": "error",
+    "original": "Erro ao carregar quartos"
+  },
+  {
+    "file": "pages/hospedagem/Acomodacoes.jsx",
+    "type": "error",
+    "original": "Informe a numeração"
+  },
+  {
+    "file": "pages/hospedagem/Acomodacoes.jsx",
+    "type": "success",
+    "original": "Acomodação registrada!"
+  },
+  {
+    "file": "pages/hospedagem/Reservas.jsx",
+    "type": "error",
+    "original": "Erro ao conectar com servidor."
+  },
+  {
+    "file": "pages/hospedagem/Reservas.jsx",
+    "type": "error",
+    "original": "Hóspede, Quarto e Check-in são obrigatórios."
+  },
+  {
+    "file": "pages/hospedagem/Reservas.jsx",
+    "type": "success",
+    "original": "Reserva / Check-in efetuado com sucesso!"
+  },
+  {
+    "file": "pages/orders/Orders.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar pedidos. Tente novamente 😕"
+  },
+  {
+    "file": "pages/orders/Orders.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar pedido. Tente novamente 😕"
+  },
+  {
+    "file": "pages/orders/Orders.jsx",
+    "type": "success",
+    "original": "Pedido criado!"
+  },
+  {
+    "file": "pages/orders/Orders.jsx",
+    "type": "error",
+    "original": "Erro ao atualizar"
+  },
+  {
+    "file": "pages/orders/Orders.jsx",
+    "type": "success",
+    "original": "Item apagado com sucesso! 🗑️"
+  },
+  {
+    "file": "pages/orders/Orders.jsx",
+    "type": "error",
+    "original": "Erro ao remover"
+  },
+  {
+    "file": "pages/orders/Orders.jsx",
+    "type": "error",
+    "original": "A prateleira emperrou, não consegui carregar os produtos 📦"
+  },
+  {
+    "file": "pages/orders/Orders.jsx",
+    "type": "error",
+    "original": "Selecione ao menos um item"
+  },
+  {
+    "file": "pages/orders/Orders.jsx",
+    "type": "success",
+    "original": "${addItems.length} item(ns) adicionado(s)!"
+  },
+  {
+    "file": "pages/pdv/PDV.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar dados do PDV. Tente novamente 😕"
+  },
+  {
+    "file": "pages/pdv/PDV.jsx",
+    "type": "success",
+    "original": "✓ ${found.nome}"
+  },
+  {
+    "file": "pages/pdv/PDV.jsx",
+    "type": "error",
+    "original": "Código ${code} não encontrado"
+  },
+  {
+    "file": "pages/pdv/PDV.jsx",
+    "type": "success",
+    "original": "✓ ${found.nome}"
+  },
+  {
+    "file": "pages/pdv/PDV.jsx",
+    "type": "error",
+    "original": "Código \"${search}\" não encontrado"
+  },
+  {
+    "file": "pages/pdv/PDV.jsx",
+    "type": "error",
+    "original": "O carrinho tá vazio! Que tal adicionar um produto? 🛒"
+  },
+  {
+    "file": "pages/pdv/PDV.jsx",
+    "type": "error",
+    "original": "Você não tem a chave para fechar essa venda 🔒"
+  },
+  {
+    "file": "pages/products/Products.jsx",
+    "type": "error",
+    "original": "A prateleira emperrou, não consegui carregar os produtos 📦"
+  },
+  {
+    "file": "pages/products/Products.jsx",
+    "type": "error",
+    "original": "Como podemos te chamar? O nome é obrigatório! 👤"
+  },
+  {
+    "file": "pages/products/Products.jsx",
+    "type": "error",
+    "original": "Tudo tem seu preço! Conta pra gente quanto isso custa 💵"
+  },
+  {
+    "file": "pages/products/Products.jsx",
+    "type": "success",
+    "original": "Prontinho! Detalhes do produto foram salvos 🏷️"
+  },
+  {
+    "file": "pages/products/Products.jsx",
+    "type": "success",
+    "original": "Item apagado com sucesso! 🗑️"
+  },
+  {
+    "file": "pages/products/Products.jsx",
+    "type": "error",
+    "original": "Erro ao remover"
+  },
+  {
+    "file": "pages/products/Products.jsx",
+    "type": "error",
+    "original": "Erro ao atualizar"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar vendas. Tente novamente 😕"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar dados. Tente novamente 😕"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar venda. Tente novamente 😕"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "error",
+    "original": "Selecione um veículo"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "error",
+    "original": "Para quem é essa venda? Selecione um cliente da lista! 🧑‍💼"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "error",
+    "original": "Informe o valor de venda"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "error",
+    "original": "Entrada não pode ser maior que o valor"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "error",
+    "original": "Confirme o recebimento da entrada via PIX antes de continuar"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "success",
+    "original": "Venda concluída! Dinheiro no bolso 💰"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "loading",
+    "original": "Gerando contrato..."
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "success",
+    "original": "Contrato gerado!"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "error",
+    "original": "Erro ao gerar contrato"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "success",
+    "original": "Venda desfeita! Acontece nas melhores famílias 🔄"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "error",
+    "original": "Erro ao cancelar"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "success",
+    "original": "Parcela paga!"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "success",
+    "original": "Parcela paga via PIX!"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "error",
+    "original": "Erro ao confirmar PIX"
+  },
+  {
+    "file": "pages/sales/Sales.jsx",
+    "type": "success",
+    "original": "Entrada confirmada! Pode registrar a venda."
+  },
+  {
+    "file": "pages/stock/StockMovements.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar estoque. Tente novamente 😕"
+  },
+  {
+    "file": "pages/stock/StockMovements.jsx",
+    "type": "error",
+    "original": "Selecione um produto"
+  },
+  {
+    "file": "pages/stock/StockMovements.jsx",
+    "type": "error",
+    "original": "Informe a quantidade"
+  },
+  {
+    "file": "pages/stock/StockMovements.jsx",
+    "type": "success",
+    "original": "Movimentação registrada!"
+  },
+  {
+    "file": "pages/stock/StockMovements.jsx",
+    "type": "error",
+    "original": "Selecione um produto"
+  },
+  {
+    "file": "pages/stock/StockMovements.jsx",
+    "type": "error",
+    "original": "Informe o novo estoque"
+  },
+  {
+    "file": "pages/stock/StockMovements.jsx",
+    "type": "success",
+    "original": "Estoque ajustado!"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar mesas. Tente novamente 😕"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "error",
+    "original": "Número da mesa é obrigatório"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "success",
+    "original": "Mesa cadastrada!"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "success",
+    "original": "Mesa atualizada!"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "success",
+    "original": "Mesa removida"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "error",
+    "original": "Erro ao remover"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "error",
+    "original": "Vixe... não consegui salvar a alteração em status 😕"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar comanda. Tente novamente 😕"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "success",
+    "original": "Comanda aberta!"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "error",
+    "original": "A prateleira emperrou, não consegui carregar os produtos 📦"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "error",
+    "original": "Selecione ao menos um item"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "success",
+    "original": "${selectedItems.length} item(ns) adicionado(s)!"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "success",
+    "original": "Conta fechada! Mais uma mesa bem servida 🧾"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "success",
+    "original": "Comanda cancelada"
+  },
+  {
+    "file": "pages/tables/Tables.jsx",
+    "type": "error",
+    "original": "Erro ao cancelar"
+  },
+  {
+    "file": "pages/vehicles/Vehicles.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar veículos. Tente novamente 😕"
+  },
+  {
+    "file": "pages/vehicles/Vehicles.jsx",
+    "type": "error",
+    "original": "Marca e modelo são obrigatórios"
+  },
+  {
+    "file": "pages/vehicles/Vehicles.jsx",
+    "type": "error",
+    "original": "Tudo tem seu preço! Conta pra gente quanto isso custa 💵"
+  },
+  {
+    "file": "pages/vehicles/Vehicles.jsx",
+    "type": "success",
+    "original": "Veículo cadastrado!"
+  },
+  {
+    "file": "pages/vehicles/Vehicles.jsx",
+    "type": "success",
+    "original": "Veículo atualizado!"
+  },
+  {
+    "file": "pages/vehicles/Vehicles.jsx",
+    "type": "success",
+    "original": "Veículo removido"
+  },
+  {
+    "file": "pages/vehicles/Vehicles.jsx",
+    "type": "error",
+    "original": "Erro ao remover"
+  },
+  {
+    "file": "pages/workshop/Workshop.jsx",
+    "type": "error",
+    "original": "Oops! Não consegui buscar OS. Tente novamente 😕"
+  },
+  {
+    "file": "pages/workshop/Workshop.jsx",
+    "type": "error",
+    "original": "Erro ao carregar"
+  },
+  {
+    "file": "pages/workshop/Workshop.jsx",
+    "type": "error",
+    "original": "Nome e valor da peça são obrigatórios"
+  },
+  {
+    "file": "pages/workshop/Workshop.jsx",
+    "type": "error",
+    "original": "Descrição é obrigatória"
+  },
+  {
+    "file": "pages/workshop/Workshop.jsx",
+    "type": "success",
+    "original": "OS criada!"
+  },
+  {
+    "file": "pages/workshop/Workshop.jsx",
+    "type": "success",
+    "original": "OS atualizada!"
+  },
+  {
+    "file": "pages/workshop/Workshop.jsx",
+    "type": "success",
+    "original": "OS removida"
+  },
+  {
+    "file": "pages/workshop/Workshop.jsx",
+    "type": "error",
+    "original": "Erro ao remover"
+  },
+  {
+    "file": "pages/workshop/Workshop.jsx",
+    "type": "error",
+    "original": "Vixe... não consegui salvar a alteração em status 😕"
+  }
+]
