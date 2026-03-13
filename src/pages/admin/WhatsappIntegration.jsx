@@ -277,6 +277,76 @@ function AIServiceCard({ title, icon: Icon, iconColor, description, serviceKey, 
             </div>
           )}
 
+          {/* Sliders de prosódia — só aparecem quando Edge-TTS está selecionado */}
+          {showProbability && cfg.provider === 'edge' && (() => {
+            const rateVal   = parseFloat((cfg.rate   || '-5%').replace('%',''))
+            const pitchVal  = parseFloat((cfg.pitch  || '+0Hz').replace('Hz',''))
+            const volumeVal = parseFloat((cfg.volume || '+0%').replace('%',''))
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 4 }}>
+                <div style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />
+
+                {/* Velocidade */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={labelStyle}>
+                    Velocidade da fala&nbsp;
+                    <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: iconColor }}>
+                      {rateVal > 0 ? `+${rateVal}%` : `${rateVal}%`}
+                    </span>
+                  </label>
+                  <input
+                    type="range" min="-50" max="50" step="5"
+                    value={rateVal}
+                    onChange={e => set('rate', `${e.target.value > 0 ? '+' : ''}${e.target.value}%`)}
+                    style={{ width: '100%', accentColor: iconColor }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)' }}>
+                    <span>-50% lenta</span><span>0% normal</span><span>+50% rápida</span>
+                  </div>
+                </div>
+
+                {/* Tom (pitch) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={labelStyle}>
+                    Tom da voz (pitch)&nbsp;
+                    <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: iconColor }}>
+                      {pitchVal > 0 ? `+${pitchVal}Hz` : `${pitchVal}Hz`}
+                    </span>
+                  </label>
+                  <input
+                    type="range" min="-20" max="20" step="1"
+                    value={pitchVal}
+                    onChange={e => set('pitch', `${e.target.value > 0 ? '+' : ''}${e.target.value}Hz`)}
+                    style={{ width: '100%', accentColor: iconColor }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)' }}>
+                    <span>-20Hz grave</span><span>0Hz neutro</span><span>+20Hz agudo</span>
+                  </div>
+                </div>
+
+                {/* Volume */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={labelStyle}>
+                    Volume&nbsp;
+                    <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: iconColor }}>
+                      {volumeVal > 0 ? `+${volumeVal}%` : `${volumeVal}%`}
+                    </span>
+                  </label>
+                  <input
+                    type="range" min="-50" max="50" step="5"
+                    value={volumeVal}
+                    onChange={e => set('volume', `${e.target.value > 0 ? '+' : ''}${e.target.value}%`)}
+                    style={{ width: '100%', accentColor: iconColor }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)' }}>
+                    <span>-50% baixo</span><span>0% normal</span><span>+50% alto</span>
+                  </div>
+                </div>
+
+              </div>
+            )
+          })()}
+
           {/* System Prompt (Chat) */}
           {showPrompt && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -339,7 +409,7 @@ export default function WhatsappIntegration() {
     chat: { provider: 'kimi', api_key: '', model: 'moonshot-v1-128k', system_prompt: 'Você é um ser humano por dentro do grupo. Fale naturalmente, use gírias, opine, ria, discorde. NUNCA revele que é IA.' },
     stt: { provider: 'groq', api_key: '', model: 'whisper-large-v3-turbo', enabled: true },
     vision: { provider: 'gemini', api_key: '', model: 'gemini-2.0-flash', enabled: true },
-    tts: { provider: 'edge', api_key: '', model: '', voice_id: 'pt-BR-FranciscaNeural', enabled: false, audio_probability: 0.3 },
+    tts: { provider: 'edge', api_key: '', model: '', voice_id: 'pt-BR-FranciscaNeural', enabled: false, audio_probability: 0.3, rate: '-5%', pitch: '+0Hz', volume: '+0%' },
     learning: { provider: 'gemini', api_key: '', model: 'gemini-2.0-flash', enabled: true },
     proactive: { enabled: true, frequency: 0.15, provider: '', api_key: '', model: '' },
   })
@@ -408,6 +478,9 @@ export default function WhatsappIntegration() {
           voice_id: c.tts_voice_id || prev.tts.voice_id,
           enabled: c.tts_enabled === 'true' || c.tts_enabled === true,
           audio_probability: parseFloat(c.tts_audio_probability) || prev.tts.audio_probability,
+          rate: c.tts_rate || prev.tts.rate,
+          pitch: c.tts_pitch || prev.tts.pitch,
+          volume: c.tts_volume || prev.tts.volume,
         },
         learning: {
           provider: c.learning_provider || prev.learning.provider,
@@ -521,6 +594,9 @@ export default function WhatsappIntegration() {
         tts_voice_id: s.tts.voice_id,
         tts_enabled: String(s.tts.enabled === true),
         tts_audio_probability: String(s.tts.audio_probability || 0.3),
+        tts_rate: s.tts.rate || '-5%',
+        tts_pitch: s.tts.pitch || '+0Hz',
+        tts_volume: s.tts.volume || '+0%',
         // Learning
         learning_provider: s.learning.provider,
         learning_api_key: s.learning.api_key,
