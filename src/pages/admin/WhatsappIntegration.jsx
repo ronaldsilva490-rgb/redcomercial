@@ -3,21 +3,24 @@ import {
   MessageCircle, QrCode, Cloud, Send, RefreshCw,
   CheckCircle, Wifi, WifiOff, Loader, Zap, Bot, Key,
   Settings, Users, Mic, Eye, Volume2, Brain, Activity,
-  ChevronDown, ChevronUp, AlertCircle, Sparkles
+  ChevronDown, ChevronUp, AlertCircle, Sparkles, Clock, Trash2, Plus, Calendar
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../../services/api'
 
 const WA = {
-  status:  () => api.get('/api/admin/whatsapp/status'),
-  start:   () => api.post('/api/admin/whatsapp/start'),
-  stop:    () => api.post('/api/admin/whatsapp/stop'),
-  reset:   () => api.post('/api/admin/whatsapp/reset'),
-  send:    (p) => api.post('/api/admin/whatsapp/send', p),
-  groups:  () => api.get('/api/admin/whatsapp/groups'),
-  getAI:   () => api.get('/api/admin/ai/configs'),
-  saveAI:  (b) => api.post('/api/admin/ai/configs', b),
-  models:  (api_key, provider) => api.post('/api/admin/ai/list-models', { api_key, provider }),
+  status:    () => api.get('/api/admin/whatsapp/status'),
+  start:     () => api.post('/api/admin/whatsapp/start'),
+  stop:      () => api.post('/api/admin/whatsapp/stop'),
+  reset:     () => api.post('/api/admin/whatsapp/reset'),
+  send:      (p) => api.post('/api/admin/whatsapp/send', p),
+  groups:    () => api.get('/api/admin/whatsapp/groups'),
+  getAI:     () => api.get('/api/admin/ai/configs'),
+  saveAI:    (b) => api.post('/api/admin/ai/configs', b),
+  models:    (api_key, provider) => api.post('/api/admin/ai/list-models', { api_key, provider }),
+  getSchedules:    () => api.get('/api/admin/whatsapp/schedules'),
+  saveSchedule:    (b) => api.post('/api/admin/whatsapp/schedules', b),
+  deleteSchedule:  (id) => api.delete(`/api/admin/whatsapp/schedules/${id}`),
 }
 
 const PROVIDERS = [
@@ -426,6 +429,23 @@ export default function WhatsappIntegration() {
   const [oficialToken, setOficialToken] = useState('')
   const [oficialPhoneId, setOficialPhoneId] = useState('')
 
+  // ── Agendamentos ──
+  const [schedules, setSchedules] = useState([])
+  const [loadingSchedules, setLoadingSchedules] = useState(false)
+  const [savingSchedule, setSavingSchedule] = useState(false)
+  const [newSched, setNewSched] = useState({
+    target_jid: '', message: '', send_time: '08:00',
+    days: ['seg','ter','qua','qui','sex'],
+    ai_generated: false, enabled: true
+  })
+
+  const DAYS_OPTIONS = [
+    { value: 'dom', label: 'D' }, { value: 'seg', label: 'S' },
+    { value: 'ter', label: 'T' }, { value: 'qua', label: 'Q' },
+    { value: 'qui', label: 'Q' }, { value: 'sex', label: 'S' },
+    { value: 'sab', label: 'S' }
+  ]
+
   // ── Polling ──
   const pollStatus = useCallback(async () => {
     try {
@@ -443,6 +463,10 @@ export default function WhatsappIntegration() {
     pollingRef.current = setInterval(pollStatus, 5000)
     return () => clearInterval(pollingRef.current)
   }, [pollStatus])
+
+  useEffect(() => {
+    if (tab === 'schedules') fetchSchedules()
+  }, [tab])
 
   // ── Carrega configs ──
   useEffect(() => {
@@ -560,6 +584,45 @@ export default function WhatsappIntegration() {
     }
   }
 
+  const fetchSchedules = async () => {
+    setLoadingSchedules(true)
+    try {
+      const res = await WA.getSchedules()
+      setSchedules(res.data?.data?.schedules || res.data?.schedules || [])
+    } catch { toast.error('Erro ao buscar agendamentos') }
+    finally { setLoadingSchedules(false) }
+  }
+
+  const handleSaveSchedule = async () => {
+    if (!newSched.target_jid) return toast.error('Informe o destino (JID do grupo ou número)')
+    if (!newSched.message)    return toast.error('Informe a mensagem')
+    if (!newSched.send_time)  return toast.error('Informe o horário')
+    setSavingSchedule(true)
+    try {
+      await WA.saveSchedule({ ...newSched, tenant_id: 'admin' })
+      toast.success('Agendamento salvo!')
+      setNewSched({ target_jid: '', message: '', send_time: '08:00', days: ['seg','ter','qua','qui','sex'], ai_generated: false, enabled: true })
+      fetchSchedules()
+    } catch (err) { toast.error(err?.response?.data?.error || 'Erro ao salvar') }
+    finally { setSavingSchedule(false) }
+  }
+
+  const handleDeleteSchedule = async (id) => {
+    if (!window.confirm('Remover este agendamento?')) return
+    try {
+      await WA.deleteSchedule(id)
+      toast.success('Removido!')
+      fetchSchedules()
+    } catch { toast.error('Erro ao remover') }
+  }
+
+  const toggleSchedDay = (day) => {
+    setNewSched(prev => ({
+      ...prev,
+      days: prev.days.includes(day) ? prev.days.filter(d => d !== day) : [...prev.days, day]
+    }))
+  }
+
   const handleSaveAI = async () => {
     setSavingAI(true)
     try {
@@ -658,9 +721,11 @@ export default function WhatsappIntegration() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        {TAB_BTN('qrcode',  <QrCode size={15}/>,  'Microserviço (QR Code)', '#22c55e')}
+        {TAB_BTN('qrcode',     <QrCode size={15}/>,    'Microserviço (QR Code)', '#22c55e')}
         <div style={{ width: 1, background: 'rgba(255,255,255,0.08)' }}/>
-        {TAB_BTN('oficial', <Cloud size={15}/>,   'API Oficial (Meta)', '#3b82f6')}
+        {TAB_BTN('schedules',  <Clock size={15}/>,     'Agendamentos', '#f59e0b')}
+        <div style={{ width: 1, background: 'rgba(255,255,255,0.08)' }}/>
+        {TAB_BTN('oficial',    <Cloud size={15}/>,     'API Oficial (Meta)', '#3b82f6')}
       </div>
 
       <div style={{ padding: 24 }}>
@@ -891,6 +956,111 @@ export default function WhatsappIntegration() {
               </div>
             </div>
           </div>
+        ) : tab === 'schedules' ? (
+          /* ── Tab Agendamentos ── */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+            {/* Formulário novo agendamento */}
+            <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                <Plus size={15} color="#f59e0b"/>
+                <span style={{ fontWeight: 700, fontSize: 13, color: '#f59e0b' }}>Novo Agendamento</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={labelStyle}>Destino (JID do grupo ou número)</label>
+                  <input className="input" style={{ fontSize: 12 }} placeholder="5585999999999@g.us" value={newSched.target_jid} onChange={e => setNewSched(p => ({...p, target_jid: e.target.value}))}/>
+                  <span style={{ fontSize: 10, color: 'var(--muted)' }}>Use o botão "Usar" na lista de grupos acima para copiar o JID</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={labelStyle}>Horário de envio</label>
+                  <input type="time" className="input" style={{ fontSize: 13 }} value={newSched.send_time} onChange={e => setNewSched(p => ({...p, send_time: e.target.value}))}/>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 10 }}>
+                <label style={labelStyle}>Mensagem / Instrução para a IA</label>
+                <textarea className="input" style={{ minHeight: 72, fontSize: 12 }}
+                  placeholder={newSched.ai_generated ? 'Ex: Mande uma mensagem de bom dia animada para o grupo' : 'Texto exato que será enviado'}
+                  value={newSched.message} onChange={e => setNewSched(p => ({...p, message: e.target.value}))}/>
+              </div>
+
+              <div style={{ display: 'flex', gap: 16, marginTop: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                {/* Dias da semana */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={labelStyle}>Dias</label>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {[{v:'dom',l:'D'},{v:'seg',l:'S'},{v:'ter',l:'T'},{v:'qua',l:'Q'},{v:'qui',l:'Q'},{v:'sex',l:'S'},{v:'sab',l:'S'}].map(d => (
+                      <button key={d.v} onClick={() => toggleSchedDay(d.v)} style={{
+                        width: 28, height: 28, borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700,
+                        background: newSched.days.includes(d.v) ? '#f59e0b' : 'rgba(255,255,255,0.08)',
+                        color: newSched.days.includes(d.v) ? '#000' : 'var(--muted)',
+                      }}>{d.l}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Toggle IA */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={labelStyle}>Modo</label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => setNewSched(p => ({...p, ai_generated: false}))} style={{ padding: '5px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, background: !newSched.ai_generated ? '#22c55e' : 'rgba(255,255,255,0.08)', color: !newSched.ai_generated ? '#000' : 'var(--muted)' }}>Texto fixo</button>
+                    <button onClick={() => setNewSched(p => ({...p, ai_generated: true}))}  style={{ padding: '5px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, background: newSched.ai_generated  ? '#a855f7' : 'rgba(255,255,255,0.08)', color: newSched.ai_generated  ? '#fff' : 'var(--muted)' }}>IA gera</button>
+                  </div>
+                </div>
+
+                <button onClick={handleSaveSchedule} disabled={savingSchedule} style={{ marginLeft: 'auto', padding: '8px 18px', background: '#f59e0b', color: '#000', border: 'none', borderRadius: 8, fontWeight: 800, cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, opacity: savingSchedule ? 0.6 : 1 }}>
+                  <Plus size={14}/> {savingSchedule ? 'Salvando…' : 'Adicionar'}
+                </button>
+              </div>
+            </div>
+
+            {/* Lista de agendamentos */}
+            <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Calendar size={15} color="#f59e0b"/>
+                  <span style={{ fontWeight: 700, fontSize: 13, color: '#f59e0b' }}>Agendamentos Ativos</span>
+                </div>
+                <button onClick={fetchSchedules} disabled={loadingSchedules} style={{ padding: '5px 10px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: 'var(--muted)', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <RefreshCw size={11} className={loadingSchedules ? 'spin' : ''}/> Atualizar
+                </button>
+              </div>
+
+              {loadingSchedules ? (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}><Loader size={20} color="#f59e0b" className="spin"/></div>
+              ) : schedules.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--muted)', fontSize: 13 }}>Nenhum agendamento configurado</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {schedules.map(s => (
+                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: s.enabled ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.02)', border: `1px solid ${s.enabled ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 10 }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 8, background: 'rgba(245,158,11,0.12)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#f59e0b' }}>{s.send_time}</span>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.message}</div>
+                        <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
+                          {s.target_jid?.split('@')[0]} · {(s.days || []).join(' ')} · {s.ai_generated ? '🤖 IA gera' : '📝 Texto fixo'}
+                        </div>
+                      </div>
+                      <button onClick={() => handleDeleteSchedule(s.id)} style={{ padding: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: '#ef4444', borderRadius: 6, display: 'flex' }}>
+                        <Trash2 size={14}/>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Info */}
+            <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
+              <strong style={{ color: '#f59e0b' }}>Modo "IA gera":</strong> A mensagem que você escreve vira uma instrução. A IA cria um texto novo e criativo a cada envio — bom para bom dia, motivacional, etc.<br/>
+              <strong style={{ color: '#f59e0b' }}>Modo "Texto fixo":</strong> Envia exatamente o que você escreveu, sempre igual.<br/>
+              O horário usa o fuso UTC da VM. Se sua VM está em UTC-3, 08:00 UTC = 05:00 local.
+            </div>
+          </div>
+
         ) : (
           /* Tab API Oficial */
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
