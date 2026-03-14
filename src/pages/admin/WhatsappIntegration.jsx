@@ -366,17 +366,78 @@ function AIServiceCard({ title, icon: Icon, iconColor, description, serviceKey, 
 
           {/* Frequência proativa */}
           {showFrequency && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={labelStyle}>Frequência de participação espontânea: {Math.round((cfg.frequency || 0.15) * 100)}%</label>
-              <input
-                type="range" min="0" max="0.5" step="0.01"
-                value={cfg.frequency || 0.15}
-                onChange={e => set('frequency', parseFloat(e.target.value))}
-                style={{ width: '100%', accentColor: iconColor }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)' }}>
-                <span>Tímida</span><span>Normal</span><span>Muito ativa</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+              {/* Frequência base */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={labelStyle}>Frequência de participação espontânea: {Math.round((cfg.frequency || 0.15) * 100)}%</label>
+                <input type="range" min="0" max="0.8" step="0.01" value={cfg.frequency || 0.15} onChange={e => set('frequency', parseFloat(e.target.value))} style={{ width: '100%', accentColor: iconColor }}/>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)' }}>
+                  <span>Tímida</span><span>Normal</span><span>Muito ativa</span>
+                </div>
               </div>
+
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />
+
+              {/* Análise em tempo real */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>Análise em tempo real</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Analisa cada mensagem individualmente, sem esperar o buffer</div>
+                </div>
+                <button onClick={() => set('realtime_enabled', !(cfg.realtime_enabled !== false))} style={{ width: 42, height: 23, borderRadius: 12, border: 'none', cursor: 'pointer', background: cfg.realtime_enabled !== false ? iconColor : 'rgba(255,255,255,0.12)', position: 'relative', transition: 'background 0.25s', flexShrink: 0 }}>
+                  <div style={{ width: 17, height: 17, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: cfg.realtime_enabled !== false ? 22 : 3, transition: 'left 0.25s' }} />
+                </button>
+              </div>
+
+              {/* Buffer size */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={labelStyle}>Tamanho do buffer de aprendizado: {cfg.buffer_size || 6} mensagens</label>
+                <input type="range" min="2" max="15" step="1" value={cfg.buffer_size || 6} onChange={e => set('buffer_size', parseInt(e.target.value))} style={{ width: '100%', accentColor: iconColor }}/>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)' }}>
+                  <span>2 (reativo)</span><span>6 (padrão)</span><span>15 (econômico)</span>
+                </div>
+              </div>
+
+              {/* Cooldown proativo */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={labelStyle}>Cooldown entre intervenções: {Math.round((cfg.proactive_cooldown_ms || 40000) / 1000)}s</label>
+                <input type="range" min="5000" max="300000" step="5000" value={cfg.proactive_cooldown_ms || 40000} onChange={e => set('proactive_cooldown_ms', parseInt(e.target.value))} style={{ width: '100%', accentColor: iconColor }}/>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)' }}>
+                  <span>5s (agressivo)</span><span>40s (padrão)</span><span>5min (discreto)</span>
+                </div>
+              </div>
+
+              {/* Cooldown realtime */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={labelStyle}>Cooldown análise em tempo real: {Math.round((cfg.realtime_cooldown_ms || 8000) / 1000)}s</label>
+                <input type="range" min="2000" max="60000" step="1000" value={cfg.realtime_cooldown_ms || 8000} onChange={e => set('realtime_cooldown_ms', parseInt(e.target.value))} style={{ width: '100%', accentColor: iconColor }}/>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)' }}>
+                  <span>2s (máx análises)</span><span>8s (padrão)</span><span>60s (econômico)</span>
+                </div>
+              </div>
+
+              {/* Urgência mínima */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={labelStyle}>Urgência mínima — grupo ativo: {cfg.realtime_urgency_active || 5}/10</label>
+                  <input type="range" min="1" max="10" step="1" value={cfg.realtime_urgency_active || 5} onChange={e => set('realtime_urgency_active', parseInt(e.target.value))} style={{ width: '100%', accentColor: iconColor }}/>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={labelStyle}>Urgência mínima — grupo quieto: {cfg.realtime_urgency_idle || 7}/10</label>
+                  <input type="range" min="1" max="10" step="1" value={cfg.realtime_urgency_idle || 7} onChange={e => set('realtime_urgency_idle', parseInt(e.target.value))} style={{ width: '100%', accentColor: iconColor }}/>
+                </div>
+              </div>
+
+              {/* Threshold grupo ativo */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={labelStyle}>Mensagens em 2 min para considerar grupo ativo: {cfg.active_group_thresh || 4}</label>
+                <input type="range" min="2" max="20" step="1" value={cfg.active_group_thresh || 4} onChange={e => set('active_group_thresh', parseInt(e.target.value))} style={{ width: '100%', accentColor: iconColor }}/>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--muted)' }}>
+                  <span>2 (sempre ativo)</span><span>4 (padrão)</span><span>20 (só quando muito ativo)</span>
+                </div>
+              </div>
+
             </div>
           )}
         </div>
@@ -414,7 +475,16 @@ export default function WhatsappIntegration() {
     vision: { provider: 'gemini', api_key: '', model: 'gemini-2.0-flash', enabled: true },
     tts: { provider: 'edge', api_key: '', model: '', voice_id: 'pt-BR-FranciscaNeural', enabled: false, audio_probability: 0.3, rate: '-5%', pitch: '+0Hz', volume: '+0%' },
     learning: { provider: 'gemini', api_key: '', model: 'gemini-2.0-flash', enabled: true },
-    proactive: { enabled: true, frequency: 0.15, provider: '', api_key: '', model: '' },
+    proactive: {
+      enabled: true, frequency: 0.15, provider: '', api_key: '', model: '',
+      buffer_size: 6,
+      proactive_cooldown_ms: 40000,
+      realtime_cooldown_ms: 8000,
+      active_group_thresh: 4,
+      realtime_urgency_active: 5,
+      realtime_urgency_idle: 7,
+      realtime_enabled: true,
+    },
   })
   const [aiBotOn, setAiBotOn] = useState(false)
   const [aiPrefix, setAiPrefix] = useState('')
@@ -518,6 +588,13 @@ export default function WhatsappIntegration() {
           provider: c.proactive_provider || prev.proactive.provider,
           api_key: c.proactive_api_key || prev.proactive.api_key,
           model: c.proactive_model || prev.proactive.model,
+          buffer_size: parseInt(c.buffer_size) || prev.proactive.buffer_size,
+          proactive_cooldown_ms: parseInt(c.proactive_cooldown_ms) || prev.proactive.proactive_cooldown_ms,
+          realtime_cooldown_ms: parseInt(c.realtime_cooldown_ms) || prev.proactive.realtime_cooldown_ms,
+          active_group_thresh: parseInt(c.active_group_thresh) || prev.proactive.active_group_thresh,
+          realtime_urgency_active: parseInt(c.realtime_urgency_active) || prev.proactive.realtime_urgency_active,
+          realtime_urgency_idle: parseInt(c.realtime_urgency_idle) || prev.proactive.realtime_urgency_idle,
+          realtime_enabled: c.realtime_enabled !== 'false',
         },
       }))
     }).catch(() => {})
@@ -672,6 +749,13 @@ export default function WhatsappIntegration() {
         proactive_provider: s.proactive.provider || '',
         proactive_api_key: s.proactive.api_key || '',
         proactive_model: s.proactive.model || '',
+        buffer_size: String(s.proactive.buffer_size || 6),
+        proactive_cooldown_ms: String(s.proactive.proactive_cooldown_ms || 40000),
+        realtime_cooldown_ms: String(s.proactive.realtime_cooldown_ms || 8000),
+        active_group_thresh: String(s.proactive.active_group_thresh || 4),
+        realtime_urgency_active: String(s.proactive.realtime_urgency_active || 5),
+        realtime_urgency_idle: String(s.proactive.realtime_urgency_idle || 7),
+        realtime_enabled: String(s.proactive.realtime_enabled !== false),
         // Legado
         ai_provider: s.chat.provider,
       }
