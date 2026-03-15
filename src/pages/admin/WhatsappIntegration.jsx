@@ -24,6 +24,7 @@ const WA = {
 }
 
 const PROVIDERS = [
+  { value: 'red-claude', label: 'RED Claude (Proxy)', color: '#FF003C' },
   { value: 'gemini',    label: 'Google Gemini',    color: '#4285F4' },
   { value: 'groq',      label: 'Groq',             color: '#F55036' },
   { value: 'openrouter',label: 'OpenRouter',        color: '#6366F1' },
@@ -176,8 +177,37 @@ function AIServiceCard({ title, icon: Icon, iconColor, description, serviceKey, 
             </div>
           )}
 
-          {/* API Key (oculto para ollama e para cards sem provider) */}
-          {hasProviderConfig && cfg.provider !== 'ollama' && cfg.provider !== 'edge' && (
+          {/* Instance ID & Proxy URL (Apenas para RED Claude) */}
+          {cfg.provider === 'red-claude' && (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={labelStyle}>RED Instance ID (da Extensão)</label>
+                <input
+                  type="text" className="input"
+                  style={{ fontSize: 13 }}
+                  placeholder="AGENTE_XXXXXXXX"
+                  value={cfg.red_instance_id || ''}
+                  onChange={e => set('red_instance_id', e.target.value)}
+                />
+                <div style={{ fontSize: 10, color: 'var(--muted)' }}>
+                  Copie o ID que aparece no popup da sua extensão RED Claude.
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={labelStyle}>URL do Proxy RED</label>
+                <input
+                  type="text" className="input"
+                  style={{ fontSize: 13 }}
+                  placeholder="ws://automais.ddns.net:11434"
+                  value={cfg.red_proxy_url || 'ws://automais.ddns.net:11434'}
+                  onChange={e => set('red_proxy_url', e.target.value)}
+                />
+              </div>
+            </>
+          )}
+
+          {/* API Key (oculto para ollama, red-claude e para cards sem provider) */}
+          {hasProviderConfig && cfg.provider !== 'ollama' && cfg.provider !== 'red-claude' && cfg.provider !== 'edge' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={labelStyle}>API Key</label>
               <div style={{ display: 'flex', gap: 6 }}>
@@ -202,8 +232,8 @@ function AIServiceCard({ title, icon: Icon, iconColor, description, serviceKey, 
             </div>
           )}
 
-          {/* Modelo — só dropdown, sem campo manual */}
-          {hasProviderConfig && providerList !== TTS_PROVIDERS && (
+          {/* Modelo — só dropdown, sem campo manual (oculto para RED Claude) */}
+          {hasProviderConfig && providerList !== TTS_PROVIDERS && cfg.provider !== 'red-claude' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={labelStyle}>
                 Modelo
