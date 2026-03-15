@@ -572,60 +572,20 @@ export default function WhatsappIntegration() {
   useEffect(() => {
     WA.getAI().then(res => {
       const c = res.data?.data || res.data || {}
-      setAiBotOn(c.ai_bot_enabled === 'true' || c.ai_bot_enabled === true)
+
+      setAiBotOn(c.ai_enabled === true || c.ai_enabled === 'true' || c.ai_bot_enabled === true || c.ai_bot_enabled === 'true')
       setAiPrefix(c.ai_prefix || '')
 
-      // Monta serviceConfigs a partir das keys do banco
+      // Lê formato novo (seções aninhadas do JSON local)
+      const merge = (prev, section) => section && typeof section === 'object' ? { ...prev, ...section } : prev
+
       setServiceConfigs(prev => ({
-        chat: {
-          provider: c.chat_provider || prev.chat.provider,
-          api_key: c[`${c.chat_provider || prev.chat.provider}_api_key`] || c.chat_api_key || prev.chat.api_key,
-          model: c.chat_model || prev.chat.model,
-          system_prompt: c.chat_system_prompt || c.gemini_system_prompt || c.groq_system_prompt || prev.chat.system_prompt,
-        },
-        stt: {
-          provider: c.stt_provider || prev.stt.provider,
-          api_key: c.stt_api_key || prev.stt.api_key,
-          model: c.stt_model || prev.stt.model,
-          enabled: c.stt_enabled !== 'false',
-        },
-        vision: {
-          provider: c.vision_provider || prev.vision.provider,
-          api_key: c.vision_api_key || prev.vision.api_key,
-          model: c.vision_model || prev.vision.model,
-          enabled: c.vision_enabled !== 'false',
-        },
-        tts: {
-          provider: c.tts_provider || prev.tts.provider,
-          api_key: c.tts_api_key || prev.tts.api_key,
-          model: c.tts_model || prev.tts.model,
-          voice_id: c.tts_voice_id || prev.tts.voice_id,
-          enabled: c.tts_enabled === 'true' || c.tts_enabled === true,
-          audio_probability: parseFloat(c.tts_audio_probability) || prev.tts.audio_probability,
-          rate: c.tts_rate || prev.tts.rate,
-          pitch: c.tts_pitch || prev.tts.pitch,
-          volume: c.tts_volume || prev.tts.volume,
-        },
-        learning: {
-          provider: c.learning_provider || prev.learning.provider,
-          api_key: c.learning_api_key || prev.learning.api_key,
-          model: c.learning_model || prev.learning.model,
-          enabled: c.learning_enabled !== 'false',
-        },
-        proactive: {
-          enabled: c.proactive_enabled !== 'false',
-          frequency: parseFloat(c.proactive_frequency) || prev.proactive.frequency,
-          provider: c.proactive_provider || prev.proactive.provider,
-          api_key: c.proactive_api_key || prev.proactive.api_key,
-          model: c.proactive_model || prev.proactive.model,
-          buffer_size: parseInt(c.buffer_size) || prev.proactive.buffer_size,
-          proactive_cooldown_ms: parseInt(c.proactive_cooldown_ms) || prev.proactive.proactive_cooldown_ms,
-          realtime_cooldown_ms: parseInt(c.realtime_cooldown_ms) || prev.proactive.realtime_cooldown_ms,
-          active_group_thresh: parseInt(c.active_group_thresh) || prev.proactive.active_group_thresh,
-          realtime_urgency_active: parseInt(c.realtime_urgency_active) || prev.proactive.realtime_urgency_active,
-          realtime_urgency_idle: parseInt(c.realtime_urgency_idle) || prev.proactive.realtime_urgency_idle,
-          realtime_enabled: c.realtime_enabled !== 'false',
-        },
+        chat:      merge(prev.chat,      c.chat),
+        stt:       merge(prev.stt,       c.stt),
+        vision:    merge(prev.vision,    c.vision),
+        tts:       merge(prev.tts,       c.tts),
+        learning:  merge(prev.learning,  c.learning),
+        proactive: merge(prev.proactive, c.proactive),
       }))
     }).catch(() => {})
   }, [])
@@ -734,64 +694,22 @@ export default function WhatsappIntegration() {
     setSavingAI(true)
     try {
       const s = serviceConfigs
+
+      // Payload no formato novo — seções aninhadas, direto pro JSON local
       const payload = {
-        ai_bot_enabled: String(aiBotOn),
-        ai_prefix: aiPrefix,
-        // Chat
-        chat_provider: s.chat.provider,
-        chat_api_key: s.chat.api_key,
-        [`${s.chat.provider}_api_key`]: s.chat.api_key,
-        chat_model: s.chat.model,
-        [`${s.chat.provider}_model`]: s.chat.model,
-        chat_system_prompt: s.chat.system_prompt,
-        [`${s.chat.provider}_system_prompt`]: s.chat.system_prompt,
-        // STT
-        stt_provider: s.stt.provider,
-        stt_api_key: s.stt.api_key,
-        [`${s.stt.provider}_api_key`]: s.stt.api_key,
-        stt_model: s.stt.model,
-        stt_enabled: String(s.stt.enabled !== false),
-        // Vision
-        vision_provider: s.vision.provider,
-        vision_api_key: s.vision.api_key,
-        [`${s.vision.provider}_api_key`]: s.vision.api_key,
-        vision_model: s.vision.model,
-        vision_enabled: String(s.vision.enabled !== false),
-        // TTS
-        tts_provider: s.tts.provider,
-        tts_api_key: s.tts.api_key,
-        tts_model: s.tts.model,
-        tts_voice_id: s.tts.voice_id,
-        tts_enabled: String(s.tts.enabled === true),
-        tts_audio_probability: String(s.tts.audio_probability || 0.3),
-        tts_rate: s.tts.rate || '-5%',
-        tts_pitch: s.tts.pitch || '+0Hz',
-        tts_volume: s.tts.volume || '+0%',
-        // Learning
-        learning_provider: s.learning.provider,
-        learning_api_key: s.learning.api_key,
-        [`${s.learning.provider}_api_key`]: s.learning.api_key,
-        learning_model: s.learning.model,
-        learning_enabled: String(s.learning.enabled !== false),
-        // Proactive
-        proactive_enabled: String(s.proactive.enabled !== false),
-        proactive_frequency: String(s.proactive.frequency || 0.15),
-        proactive_provider: s.proactive.provider || '',
-        proactive_api_key: s.proactive.api_key || '',
-        proactive_model: s.proactive.model || '',
-        buffer_size: String(s.proactive.buffer_size || 6),
-        proactive_cooldown_ms: String(s.proactive.proactive_cooldown_ms || 40000),
-        realtime_cooldown_ms: String(s.proactive.realtime_cooldown_ms || 8000),
-        active_group_thresh: String(s.proactive.active_group_thresh || 4),
-        realtime_urgency_active: String(s.proactive.realtime_urgency_active || 5),
-        realtime_urgency_idle: String(s.proactive.realtime_urgency_idle || 7),
-        realtime_enabled: String(s.proactive.realtime_enabled !== false),
-        // Legado
-        ai_provider: s.chat.provider,
+        ai_enabled:      aiBotOn,
+        ai_bot_enabled:  aiBotOn,
+        ai_prefix:       aiPrefix,
+        chat:      { ...s.chat },
+        stt:       { ...s.stt,      enabled: s.stt.enabled !== false },
+        vision:    { ...s.vision,   enabled: s.vision.enabled !== false },
+        tts:       { ...s.tts,      enabled: s.tts.enabled === true },
+        learning:  { ...s.learning, enabled: s.learning.enabled !== false },
+        proactive: { ...s.proactive,enabled: s.proactive.enabled !== false },
       }
 
       await WA.saveAI(payload)
-      toast.success('Configurações salvas! IA recarregada.')
+      toast.success('Configuracoes salvas! IA recarregada.')
     } catch (err) {
       toast.error(err?.response?.data?.error || 'Erro ao salvar')
     } finally {
