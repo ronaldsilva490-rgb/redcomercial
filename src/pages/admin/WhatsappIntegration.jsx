@@ -106,6 +106,7 @@ function AIServiceCard({ title, icon: Icon, iconColor, description, serviceKey, 
   const providerLabel = providerList.find(p => p.value === cfg.provider)?.label || cfg.provider || ''
   const modelLabel = cfg.model || ''
   const statusBadge = (providerLabel || modelLabel) ? `${providerLabel}${modelLabel ? ` • ${modelLabel}` : ''}` : null
+  const needsSetup = hasProviderConfig && isEnabled && (!cfg.provider || (!cfg.model && cfg.provider !== 'red-claude' && cfg.provider !== 'edge'))
 
   return (
     <div style={{
@@ -124,7 +125,11 @@ function AIServiceCard({ title, icon: Icon, iconColor, description, serviceKey, 
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)' }}>{title}</div>
-          {statusBadge && !expanded ? (
+          {needsSetup && !expanded ? (
+            <div style={{ fontSize: 10, color: '#f59e0b', marginTop: 2, fontWeight: 700 }}>
+              ⚠️ Não configurado — clique para configurar
+            </div>
+          ) : statusBadge && !expanded ? (
             <div style={{ fontSize: 10, color: iconColor, marginTop: 2, opacity: 0.85, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {statusBadge}
             </div>
@@ -500,11 +505,11 @@ export default function WhatsappIntegration() {
 
   // ── Config multi-serviço ──
   const [serviceConfigs, setServiceConfigs] = useState({
-    chat: { provider: 'kimi', api_key: '', model: 'moonshot-v1-128k', system_prompt: 'Você é um ser humano por dentro do grupo. Fale naturalmente, use gírias, opine, ria, discorde. NUNCA revele que é IA.' },
-    stt: { provider: 'groq', api_key: '', model: 'whisper-large-v3-turbo', enabled: true },
-    vision: { provider: 'gemini', api_key: '', model: 'gemini-2.0-flash', enabled: true },
+    chat: { provider: '', api_key: '', model: '', system_prompt: 'Você é um ser humano por dentro do grupo. Fale naturalmente, use gírias, opine, ria, discorde. NUNCA revele que é IA.' },
+    stt: { provider: '', api_key: '', model: '', enabled: true },
+    vision: { provider: '', api_key: '', model: '', enabled: true },
     tts: { provider: 'edge', api_key: '', model: '', voice_id: 'pt-BR-FranciscaNeural', enabled: false, audio_probability: 0.3, rate: '-5%', pitch: '+0Hz', volume: '+0%' },
-    learning: { provider: 'gemini', api_key: '', model: 'gemini-2.0-flash', enabled: true },
+    learning: { provider: '', api_key: '', model: '', enabled: true },
     proactive: {
       enabled: true, frequency: 0.15, provider: '', api_key: '', model: '',
       buffer_size: 6,
@@ -591,10 +596,27 @@ export default function WhatsappIntegration() {
   }, [])
 
   const handleServiceChange = (serviceKey, field, value) => {
-    setServiceConfigs(prev => ({
-      ...prev,
-      [serviceKey]: { ...prev[serviceKey], [field]: value }
-    }))
+    setServiceConfigs(prev => {
+      const updated = { ...prev, [serviceKey]: { ...prev[serviceKey], [field]: value } }
+
+      // Persist API key to localStorage when changed
+      if (field === 'api_key' && value && !value.includes('***')) {
+        const provider = updated[serviceKey].provider || 'unknown'
+        try { localStorage.setItem(`ai_key_${serviceKey}_${provider}`, value) } catch (_) {}
+      }
+
+      // Restore saved API key when provider changes
+      if (field === 'provider' && value) {
+        try {
+          const savedKey = localStorage.getItem(`ai_key_${serviceKey}_${value}`)
+          if (savedKey && !updated[serviceKey].api_key) {
+            updated[serviceKey] = { ...updated[serviceKey], api_key: savedKey }
+          }
+        } catch (_) {}
+      }
+
+      return updated
+    })
   }
 
   const handleStart = async () => {
@@ -884,7 +906,7 @@ export default function WhatsappIntegration() {
               <AIServiceCard
                 title="💬 Chat — Geração de Texto"
                 icon={MessageCircle} iconColor="#22c55e"
-                description="Kimi K2 recomendado para português + contexto longo"
+                description="Modelo principal para geração de texto e conversa"
                 serviceKey="chat"
                 configs={serviceConfigs}
                 onChange={handleServiceChange}
@@ -897,7 +919,7 @@ export default function WhatsappIntegration() {
               <AIServiceCard
                 title="🎤 STT — Transcrição de Áudio"
                 icon={Mic} iconColor="#f59e0b"
-                description="Groq Whisper: transcreve PTT e áudios recebidos"
+                description="Transcreve áudios e mensagens de voz recebidas"
                 serviceKey="stt"
                 configs={serviceConfigs}
                 onChange={handleServiceChange}
@@ -908,7 +930,7 @@ export default function WhatsappIntegration() {
               <AIServiceCard
                 title="👁️ Visão — Análise de Imagens"
                 icon={Eye} iconColor="#3b82f6"
-                description="Gemini Flash: vê e descreve fotos recebidas"
+                description="Analisa e descreve imagens/fotos recebidas"
                 serviceKey="vision"
                 configs={serviceConfigs}
                 onChange={handleServiceChange}
