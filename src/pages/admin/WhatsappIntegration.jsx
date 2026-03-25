@@ -203,8 +203,8 @@ function AIServiceCard({ title, icon: Icon, iconColor, description, serviceKey, 
                 <input
                   type="text" className="input"
                   style={{ fontSize: 13 }}
-                  placeholder="ws://automais.ddns.net:11434"
-                  value={cfg.red_proxy_url || 'ws://automais.ddns.net:11434'}
+                  placeholder="ws://redsystems.ddns.net:11434"
+                  value={cfg.red_proxy_url || 'ws://redsystems.ddns.net:11434'}
                   onChange={e => set('red_proxy_url', e.target.value)}
                 />
               </div>
