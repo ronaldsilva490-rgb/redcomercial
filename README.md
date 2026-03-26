@@ -1,4 +1,4 @@
-# Red Comercial (Frontend)
+# Red Comercial (Frontend) v5.0
 
 Este é o frontend da aplicação **Red Comercial**, uma Single Page Application (SPA) reativa construída com React e Vite.
 

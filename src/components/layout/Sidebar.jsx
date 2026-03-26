@@ -181,6 +181,9 @@ export default function Sidebar({ open, onClose }) {
               <div style={{ fontSize: 10, color: papelCfg.color, fontWeight: 700, marginTop: 1 }}>
                 {papelCfg.label}
               </div>
+              <div style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 700, marginTop: 2 }}>
+                RED v5.0
+              </div>
             </div>
           </div>
           </div>
