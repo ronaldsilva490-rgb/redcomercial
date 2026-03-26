@@ -25,6 +25,7 @@ const WA = {
 
 const PROVIDERS = [
   { value: 'red-claude', label: 'RED Claude (Proxy)', color: '#FF003C' },
+  { value: 'red-perplexity', label: 'RED Perplexity (Proxy)', color: '#20B2AA' },
   { value: 'gemini',    label: 'Google Gemini',    color: '#4285F4' },
   { value: 'groq',      label: 'Groq',             color: '#F55036' },
   { value: 'openrouter',label: 'OpenRouter',        color: '#6366F1' },
@@ -106,7 +107,7 @@ function AIServiceCard({ title, icon: Icon, iconColor, description, serviceKey, 
   const providerLabel = providerList.find(p => p.value === cfg.provider)?.label || cfg.provider || ''
   const modelLabel = cfg.model || ''
   const statusBadge = (providerLabel || modelLabel) ? `${providerLabel}${modelLabel ? ` • ${modelLabel}` : ''}` : null
-  const needsSetup = hasProviderConfig && isEnabled && (!cfg.provider || (!cfg.model && cfg.provider !== 'red-claude' && cfg.provider !== 'edge'))
+  const needsSetup = hasProviderConfig && isEnabled && (!cfg.provider || (!cfg.model && cfg.provider !== 'red-claude' && cfg.provider !== 'red-perplexity' && cfg.provider !== 'edge'))
 
   return (
     <div style={{
@@ -182,20 +183,20 @@ function AIServiceCard({ title, icon: Icon, iconColor, description, serviceKey, 
             </div>
           )}
 
-          {/* Instance ID & Proxy URL (Apenas para RED Claude) */}
-          {cfg.provider === 'red-claude' && (
+          {/* Instance ID & Proxy URL (RED Claude ou RED Perplexity) */}
+          {(cfg.provider === 'red-claude' || cfg.provider === 'red-perplexity') && (
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>RED Instance ID (da Extensão)</label>
                 <input
                   type="text" className="input"
                   style={{ fontSize: 13 }}
-                  placeholder="AGENTE_XXXXXXXX"
+                  placeholder={cfg.provider === 'red-perplexity' ? 'PRX_AGENTE_XXXXXXXX' : 'AGENTE_XXXXXXXX'}
                   value={cfg.red_instance_id || ''}
                   onChange={e => set('red_instance_id', e.target.value)}
                 />
                 <div style={{ fontSize: 10, color: 'var(--muted)' }}>
-                  Copie o ID que aparece no popup da sua extensão RED Claude.
+                  Copie o ID que aparece no popup da sua extensão {cfg.provider === 'red-perplexity' ? 'RED Perplexity' : 'RED Claude'}.
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -211,8 +212,8 @@ function AIServiceCard({ title, icon: Icon, iconColor, description, serviceKey, 
             </>
           )}
 
-          {/* API Key (oculto para ollama, red-claude e para cards sem provider) */}
-          {hasProviderConfig && cfg.provider !== 'ollama' && cfg.provider !== 'red-claude' && cfg.provider !== 'edge' && (
+          {/* API Key (oculto para ollama, red-claude, red-perplexity e para cards sem provider) */}
+          {hasProviderConfig && cfg.provider !== 'ollama' && cfg.provider !== 'red-claude' && cfg.provider !== 'red-perplexity' && cfg.provider !== 'edge' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={labelStyle}>API Key</label>
               <div style={{ display: 'flex', gap: 6 }}>
@@ -238,7 +239,7 @@ function AIServiceCard({ title, icon: Icon, iconColor, description, serviceKey, 
           )}
 
           {/* Modelo — só dropdown, sem campo manual (oculto para RED Claude) */}
-          {hasProviderConfig && providerList !== TTS_PROVIDERS && cfg.provider !== 'red-claude' && (
+          {hasProviderConfig && providerList !== TTS_PROVIDERS && cfg.provider !== 'red-claude' && cfg.provider !== 'red-perplexity' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={labelStyle}>
                 Modelo
